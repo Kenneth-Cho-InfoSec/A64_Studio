@@ -1,17 +1,21 @@
 # Verification
 
-This document records what was actually tested, on which hardware, and what
-was only tested in a fallback environment. It deliberately separates
-real-device evidence from host/QEMU evidence.
+This document records what was actually tested, on which hardware or emulator,
+and what was only tested in a fallback environment. It deliberately separates
+real-device evidence, Android ARM64 emulator evidence, and host/QEMU evidence.
 
 ## Real device
 
 - Device: Google Pixel 8
 - Android: 17
 - ABI: `arm64-v8a`
-- App: debug build (`dev.a64studio.debug`), later rebuilt with the final
-  trampoline fix
+- App: debug build (`dev.a64studio.debug`)
 - Connection: USB debugging, no root, no emulator
+
+The execution checks below were performed before the final trampoline fix. The
+final APK was rebuilt after the fix, but the Pixel was unplugged before it could
+be reinstalled. See [Register-leak finding](#7-register-leak-finding) and the
+emulator section for the post-fix evidence.
 
 Commands used for the basic device checks:
 
@@ -115,7 +119,7 @@ native-code: 'arm64-v8a'
 
 ### 6. Screenshots
 
-The screenshots in `docs/screenshots/` were captured from the Pixel 8:
+The Pixel screenshots in `docs/screenshots/` are:
 
 - `editor-fib.png` — Fibonacci source and completed run.
 - `registers-fib.png` — register inspector after Fibonacci.
@@ -123,16 +127,124 @@ The screenshots in `docs/screenshots/` were captured from the Pixel 8:
 - `hex-patcher.png` — raw-hex disassembly/execution screen.
 - `worker-timeout.png` — status after the infinite branch was killed.
 
+The API 26 emulator screenshot is
+`docs/screenshots/registers-fib-api26.png`; it is described in the emulator
+section below.
+
 ### 7. Register-leak finding
 
 The `registers-fib.png` capture also exposed a bug: guest `x10` contained a
 host pointer (`0xd381a83dbf90`) instead of zero. The trampoline had used
 `x10` as the register-file base and loaded guest `x10` too early. The
 trampoline now loads `x10` last and uses `x30` for the trampoline pointer.
-The Rust test suite asserts that x1–x29 are zero after `mov x0,#42; ret`, and
-that test passes under QEMU. The fix is included in the rebuilt debug and
-release APKs. A physical-device re-check of the `x10` value is still pending
-because the Pixel was unplugged before the fix was made.
+
+The final Android test now asserts that **x1–x29 are zero** after
+`mov x0, #42; ret`, not just `x10`. It passes on the API 26 ARM64 emulator.
+The fix is included in the rebuilt debug and release APKs. A physical-device
+re-check of the `x10` value is still pending because the Pixel was unplugged
+before the fix was made.
+
+## Android ARM64 emulator (TCG)
+
+The Android emulator frontend does not support ARM64 system images on an
+x86_64 host. A direct headless QEMU invocation was used as a workaround. This
+is an **emulated ARM64 Android guest**, not the Pixel's real CPU. It validates
+the Android/JNI/Binder/`:worker`/Compose integration path that the host tests
+cannot cover; it does not replace real-hardware CPU or performance evidence.
+
+- Host: Arch Linux x86_64
+- Emulator: Android Emulator 37.2.12.0 (build 16428233)
+- Binary: `emulator/qemu/linux-x86_64/qemu-system-aarch64-headless`
+- AVD: `a64test26`
+- System image: `system-images;android-26;default;arm64-v8a`
+- Android: 8.0.0 (API 26)
+- ABI: `arm64-v8a`
+- Resources: 4 cores, 2048 MB RAM, no snapshot, software GPU (`-gpu off`),
+  headless
+- ADB serial used: `emulator-5556`
+
+Boot command:
+
+```bash
+$ANDROID_HOME/emulator/qemu/linux-x86_64/qemu-system-aarch64-headless \
+  -avd a64test26 \
+  -no-window -no-audio -no-boot-anim \
+  -gpu off -no-snapshot -cores 4 -memory 2048 -no-metrics \
+  -show-kernel -qemu -machine virt
+```
+
+The guest reached `sys.boot_completed=1` and stayed up. It reported
+`ro.build.version.release=8.0.0` and `ro.product.cpu.abi=arm64-v8a`.
+
+### Instrumentation suite
+
+The test APK was installed and run directly with `adb`. Gradle's
+`connectedDebugAndroidTest` task was not used because its UTP dependency could
+not be resolved in the offline environment; the same test APK and runner were
+used.
+
+```bash
+adb -s emulator-5556 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5556 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s emulator-5556 shell am instrument -w -r \
+  dev.a64studio.debug.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+Result:
+
+```
+Time: 1.989
+OK (7 tests)
+```
+
+The seven tests cover:
+
+| Test | Evidence |
+|---|---|
+| `movX0_42_returns42` | Source `mov x0, #42; ret` returns `x0 = 42`; x1–x29 are all zero, including the former `x10` leak. |
+| `rawHexMovX0_42_returns42` | Raw payload `400580d2c0035fd6` returns `x0 = 42`. |
+| `saveAndReopenProject` | Project source round-trips through private `.s` storage. |
+| `assemblyDiagnosticsHaveLineAndColumn` | Invalid input produces a diagnostic with line and column. |
+| `hangingGuestIsTerminatedByWorkerWatchdog` | `b .` is killed by the worker watchdog; the editor process survives. |
+| `appRequestsNoNetworkPermission` | The installed app does not request `INTERNET`. |
+| `disassemblerDecodesMovAndRet` | The disassembler decodes the expected `mov`/`ret` instructions. |
+
+Test APK: `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`
+(383,483 bytes, SHA-256
+`fb87f8b086180cb5e6f6f2fd95618e787dfa24fea00b98d46d7b9a0d677db5e8`).
+
+### Manual UI and release APK
+
+The debug build was launched and the bundled `fib.s` example was assembled and
+run. The Registers screen showed:
+
+```
+x0 = 0x37   (55)
+x1 = 0x59   (89)
+```
+
+The release APK was then installed and launched on the same emulator:
+
+```bash
+adb -s emulator-5556 install -r dist/a64studio-0.1.0-release.apk
+adb -s emulator-5556 shell am start -n dev.a64studio/dev.a64studio.MainActivity
+```
+
+`fib.s` ran from the release build with `Run completed in 0.180 ms`, and the
+Registers screen showed the same `x0=0x37`, `x1=0x59` values. The screenshot
+`docs/screenshots/registers-fib-api26.png` is from that release run.
+
+### Emulator boundary
+
+- This is TCG emulation of an ARM64 Android guest. Timings such as 0.180 ms
+  are guest-emulation timings, not Pixel hardware timings.
+- API 28 booted to adb, but `system_server` boot-looped after a SIGSEGV in
+  `libstagefright_codec2_vndk.so` (`_GLOBAL__sub_I_C2Config.cpp`); it never
+  reached a usable `sys.boot_completed=1` state.
+- API 30 and API 36 host QEMU processes crashed with SIGSEGV in
+  `goldfish_address_space_memory_state_save`.
+- API 26 was the only image that completed boot and remained usable in this
+  environment. No claim is made for other Android versions on this emulator.
 
 ## Host and QEMU
 
@@ -184,9 +296,9 @@ tests actually enter the trampoline and run:
 - raw hex `400580d2c0035fd6` → `x0 = 42`.
 - `fib.s` → `x0 = 55`.
 
-This is the fallback that validates the trampoline after the Pixel was
-unplugged. It cannot validate Android Binder/`:worker` lifecycle or Compose
-UI.
+QEMU user-mode validates the trampoline and Rust execution path. It does not
+validate Android Binder/`:worker` lifecycle or Compose UI; the API 26 emulator
+section covers those.
 
 ### Encoding cross-check
 
@@ -207,62 +319,50 @@ The reference is the NDK 28.2.13676358 `aarch64-linux-android21-clang` and
 ### Kotlin/JVM tests
 
 ```bash
-./gradlew :app:testDebugUnitTest
+./gradlew :app:testDebugUnitTest --offline --rerun-tasks
 ```
 
-Result: 5 tests pass (`HighlightTest`): token-stream parsing, malformed-line
+Result: **5 tests pass** (`HighlightTest`): token-stream parsing, malformed-line
 rejection, empty input, minimap line caps and long-file sampling.
-
-### Android instrumentation build
-
-```bash
-./gradlew :app:assembleDebugAndroidTest
-```
-
-Result: `BUILD SUCCESSFUL`. The test APK compiles. It contains tests for:
-
-- real `mov x0, #42; ret` execution;
-- raw-hex execution;
-- diagnostics with line/column;
-- disassembly of `mov`/`ret`;
-- worker watchdog termination of `b .`;
-- project save/reopen;
-- absence of `INTERNET`.
-
-The connected run (`connectedDebugAndroidTest`) was not completed in this
-workspace because the only ARM64 device was unplugged. The manual checks in
-the first half of this document cover the same execution and timeout paths,
-except save/reopen. Save/reopen is covered by the instrumentation test source,
-but the final automated run is pending a device; the manual save/reopen flow
-was not completed before the Pixel was unplugged.
 
 ## APK verification
 
-Final rebuild after the trampoline fix:
+The final artifacts were rebuilt from the current source tree with the release
+signing environment loaded:
 
 ```bash
-./gradlew :app:assembleDebug :app:assembleRelease
+source ~/.a64studio-release.env
+./gradlew :app:clean :app:assembleDebug :app:assembleRelease \
+  --offline --no-parallel
 ```
 
 Artifacts:
 
 | Artifact | Size | SHA-256 |
 |---|---:|---|
-| `app/build/outputs/apk/debug/app-debug.apk` | 10 MB | `ef9deb87244646ca120937835d19ec87be85916f86a5b47ac7b1a34eabf02940` |
-| `app/build/outputs/apk/release/app-release.apk` | 7.0 MB | `8fa3927d770333ddd311669ec777fe55d8932a862e6f85ebb00ff3657b65cab6` |
+| `dist/a64studio-0.1.0-debug.apk` (also `app/build/outputs/apk/debug/app-debug.apk`) | 9,668,802 bytes | `9e3a6cabeb7da54559fa34756c3deda4363f576e62d8652507ce385d3674d556` |
+| `dist/a64studio-0.1.0-release.apk` (also `app/build/outputs/apk/release/app-release.apk`) | 7,325,907 bytes | `6a4fe08a23145411b353816f56587ee81cfcc507f3796b51f827a463b4af548e` |
+
+`dist/SHA256SUMS` contains the same two hashes. The `dist/` directory is
+git-ignored; the APKs are local deliverables, not committed binaries.
 
 The release APK is signed with a local development key:
 
 ```
 Verifies
+Verified using v1 scheme (JAR signing): false
 Verified using v2 scheme (APK Signature Scheme v2): true
 Number of signers: 1
+V2 Signer: certificate DN: CN=A64 Studio, OU=Development, O=A64 Studio, L=Local, ST=Local, C=US
+V2 Signer: key algorithm: RSA
+V2 Signer: key size (bits): 2048
 ```
 
 Both APKs contain:
 
 ```
 lib/arm64-v8a/liba64core.so
+lib/arm64-v8a/libandroidx.graphics.path.so
 assets/examples/fib.s
 assets/examples/hello.s
 assets/examples/memory.s
@@ -274,16 +374,25 @@ The packaged native library is stripped by Gradle; its SHA-256 inside both
 APKs is:
 
 ```
-ff480e3f12257359677ffcf09b28702a66d6913a72d76b5c9e53ffc1ed7c28c1
+427bfb05a05c556c36836ee90e18f5514c10793f717761e74ee17aee50e92c0f
 ```
 
+The release manifest requests no `android.permission.INTERNET`; the only
+declared permission is the Android-generated
+`dev.a64studio.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`.
+
 The local signing key is **not** in the repository. It lives outside the
-project and is only used to produce an installable local release.
+project and is only used to produce an installable local release. F-Droid
+signs with its own key.
 
 ## Known verification gaps
 
-- Physical re-test of guest `x10 = 0` after the trampoline fix.
-- Automated `connectedDebugAndroidTest` run (device was unplugged).
-- Automated save/reopen on device (manual development check only).
+- Physical re-test of guest `x10 = 0` (and x1–x29 generally) after the
+  trampoline fix. The API 26 emulator instrumentation covers this, but the
+  Pixel was unplugged before the rebuilt APK could be reinstalled.
 - Testing on a 16 KiB-page ARM64 device and on non-Pixel ARM64 SoCs.
+- Android versions other than API 26 on the ARM64 emulator; the Pixel evidence
+  is Android 17.
 - Long-running benchmark accuracy on thermal-throttled devices.
+- Automated Compose UI interaction beyond the manual emulator run and the
+  JVM highlighting tests.

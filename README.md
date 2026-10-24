@@ -117,7 +117,9 @@ python3 scripts/verify-encodings.py
 
 The instrumentation suite covers real execution of `mov x0, #42; ret`,
 raw-hex execution, diagnostics, disassembly, worker watchdog termination,
-save/reopen, and the absence of the `INTERNET` permission.
+save/reopen, and the absence of the `INTERNET` permission. It passes 7/7 on an
+ARM64 API 26 emulator; see `docs/VERIFICATION.md` for the direct-headless
+emulator setup and the real-device evidence.
 
 ### QEMU fallback
 
@@ -133,7 +135,11 @@ scripts/qemu-aarch64-test.sh
 ## Verification performed
 
 The debug build was installed and exercised on a Pixel 8 running Android 17
-(`arm64-v8a`). The results below are from that device, not from an emulator:
+(`arm64-v8a`). The results below are from that device, not from an emulator.
+The final debug and release APKs were also installed on an ARM64 API 26
+emulator (TCG); all seven instrumentation tests passed, and the release build
+ran the Fibonacci example. That emulator evidence validates the Android
+integration path, not real-CPU behavior.
 
 - Raw payload `40 05 80 d2 c0 03 5f d6` (`mov x0, #42; ret`) executed and
   the Registers screen showed `x0 = 0x2a` (42).
@@ -151,8 +157,10 @@ The debug build was installed and exercised on a Pixel 8 running Android 17
 
 The Rust suite (48 unit tests plus the bundled-examples test) passes on the
 host and under `qemu-aarch64` with the `aarch64-unknown-linux-musl` target.
-The Kotlin unit tests pass on the JVM. The instrumentation test APK compiles;
-the on-device manual checks above cover the same execution paths.
+The Kotlin unit tests pass 5/5 on the JVM. The instrumentation suite passes
+7/7 on the API 26 ARM64 emulator; the Pixel manual checks above cover the same
+execution paths. See `docs/VERIFICATION.md` for exact commands, hashes and
+emulator limitations.
 
 ## Architecture
 

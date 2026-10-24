@@ -46,6 +46,16 @@ class DeviceExecutionTest {
         assertTrue("native execution should be supported: ${result.reason}", result.supported)
         assertTrue("run should succeed: ${result.reason}", result.ok)
         assertEquals(42L, result.registers.first { it.name == "x0" }.value)
+        // The trampoline must not leak host pointers into the guest register
+        // file. x10 was the base register before the final fix, so assert the
+        // whole untouched set, not just x10.
+        for (i in 1..29) {
+            assertEquals(
+                "x$i should remain zero",
+                0L,
+                result.registers.first { it.name == "x$i" }.value,
+            )
+        }
     }
 
     @Test

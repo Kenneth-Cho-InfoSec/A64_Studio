@@ -11,6 +11,12 @@ constraints, not placeholders.
   `native execution is unavailable on this host: A64 Studio is running on a
   non-ARM64 CPU`.
 - **Android 8.0 (API 26) or newer.**
+- **ARM64-on-x86_64 emulator testing uses an unsupported workaround.** The normal
+  Android emulator frontend rejects ARM64 system images on x86_64. A direct
+  headless TCG run of the API 26 image was used only for Android integration
+  testing. API 28/30/36 images crashed before a usable boot in this
+  environment. Treat emulator results as Android-lifecycle evidence, not as
+  real-CPU evidence.
 - **No root, no Termux, no Linux userland.** Guest code runs in the app's
   ordinary Android sandbox.
 
@@ -98,9 +104,17 @@ constraints, not placeholders.
 - The real-device checks were performed on a Pixel 8 (Android 17,
   `arm64-v8a`). Other ARM64 devices, page sizes and Android versions may
   expose different HWCAP features or W^X behavior.
-- The Android instrumentation suite is provided and compiles, but the final
-  run in this workspace was blocked after the test device was unplugged. The
-  manual device checks in [VERIFICATION.md](VERIFICATION.md) cover the same
-  execution, diagnostics, timeout and permission paths.
+- The Android instrumentation suite passes on an ARM64 API 26 emulator (TCG):
+  **7/7 tests**, including the x1–x29 zero assertion after
+  `mov x0, #42; ret`. This validates the Android/JNI/Binder/`:worker`/Compose
+  path, but not real-hardware CPU timing. A physical-device re-run after the
+  trampoline fix is still pending.
+- The API 26 emulator was the only ARM64 image that completed boot in this
+  environment. API 28 failed in `system_server` (Codec2), and API 30/36 host
+  QEMU processes crashed in `goldfish_address_space_memory_state_save`.
 - QEMU user-mode validates the AArch64 trampoline and Rust tests. It does not
-  validate Android `:worker` lifecycle, Binder behavior or Compose UI.
+  validate Android `:worker` lifecycle, Binder behavior or Compose UI; the
+  API 26 emulator covers those.
+- Gradle's `connectedDebugAndroidTest` task was not used because its UTP
+  dependency was unavailable offline. The same test APK was installed and run
+  with `adb shell am instrument`; this does not change the test code or result.
