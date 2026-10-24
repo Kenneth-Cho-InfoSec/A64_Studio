@@ -38,7 +38,7 @@ OK (7 tests)
 
 ### Current Material 3 UI milestone
 
-The approved UI implementation was rebuilt from commit `d5cf3cb` and checked
+The approved UI implementation was rebuilt from commit `aab5151` and checked
 on the same physical Pixel 8 without an emulator:
 
 ```text
@@ -61,12 +61,14 @@ The release APK installed successfully. Manual device checks verified:
 Current signed release APK SHA-256:
 
 ```text
-8051f5d356c9b4ec877aaaa85c5afcaa0bd3b0885fcb3633a1ef6236e10a6a16
+4d2c5b5471fe037d90f683ee7cd7feedc54e3e52c2284ff9ec1066c18e8f715c
 ```
 
 This validates the implemented UI milestone on a compact Pixel window. The
 NavigationRail branch is source-verified but remains untested on a physical
 600 dp or wider window in this environment.
+The first post-theme instrumentation attempt had a worker-start timing
+failure; the immediate rerun passed **7/7** in `2.585` seconds.
 
 The suite included `movX0_42_returns42`, which asserted `x0 = 42` and every
 register x1–x29 was zero, including x10. The debug APK installed successfully
