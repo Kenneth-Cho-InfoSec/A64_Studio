@@ -48,6 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.a64studio.model.Diagnostic
@@ -55,8 +57,6 @@ import dev.a64studio.model.Diagnostic
 @Composable
 fun EditorScreen(
     vm: StudioViewModel,
-    onSettings: () -> Unit,
-    onProjects: () -> Unit,
 ) {
     var showFind by remember { mutableStateOf(false) }
     var showFold by remember { mutableStateOf(false) }
@@ -92,8 +92,6 @@ fun EditorScreen(
             TextButton(onClick = { vm.redoEdit() }, enabled = vm.folded == null) { Text("Redo") }
             TextButton(onClick = { showFind = true }) { Text("Find") }
             TextButton(onClick = { showFold = true }) { Text("Fold") }
-            TextButton(onClick = onProjects) { Text("Projects") }
-            TextButton(onClick = onSettings) { Text("Colors") }
         }
 
         Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +198,10 @@ private fun CodeEditor(
                 value = vm.editor,
                 onValueChange = vm::onEditorChange,
                 readOnly = vm.folded != null,
-                modifier = Modifier.weight(1f).padding(top = 8.dp, bottom = 12.dp, end = 8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 8.dp, bottom = 12.dp, end = 8.dp)
+                    .semantics { contentDescription = "Assembly editor" },
                 textStyle = TextStyle(
                     fontFamily = FontFamily.Monospace,
                     fontSize = vm.fontSize.sp,
@@ -223,7 +224,12 @@ private fun CodeEditor(
 private fun Minimap(text: String, colors: EditorColors) {
     val bars = remember(text) { minimapBars(text) }
     Canvas(
-        Modifier.width(40.dp).fillMaxHeight().padding(vertical = 8.dp).background(colors.selection.copy(alpha = 0.25f)),
+        Modifier
+            .width(40.dp)
+            .fillMaxHeight()
+            .padding(vertical = 8.dp)
+            .background(colors.selection.copy(alpha = 0.25f))
+            .semantics { contentDescription = "Code minimap preview" },
     ) {
         if (bars.isEmpty()) return@Canvas
         val step = size.height / bars.size
@@ -283,7 +289,12 @@ private fun ErrorPanel(vm: StudioViewModel) {
                 "line ${e.line}:${e.col}  ${e.message}",
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                 color = color,
-                modifier = Modifier.fillMaxWidth().clickable { vm.jumpTo(e.line, e.col) }.padding(vertical = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .clickable { vm.jumpTo(e.line, e.col) }
+                    .padding(vertical = 2.dp)
+                    .semantics { contentDescription = "${e.severity}: line ${e.line}, column ${e.col}: ${e.message}" },
             )
         }
     }

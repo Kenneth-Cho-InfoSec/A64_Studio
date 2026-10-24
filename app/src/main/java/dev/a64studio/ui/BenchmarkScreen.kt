@@ -66,7 +66,9 @@ private fun BenchmarkCard(b: Benchmark, vm: StudioViewModel) {
             }
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Button(onClick = { vm.runBenchmark(b.id) }, enabled = !vm.isRunning) { Text("Run") }
+                Button(onClick = { vm.runBenchmark(b.id) }, enabled = !vm.isRunning) {
+                    Text(if (vm.isRunning) "Running…" else "Run")
+                }
                 Text(
                     "${b.iterations} ${b.unit}",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),

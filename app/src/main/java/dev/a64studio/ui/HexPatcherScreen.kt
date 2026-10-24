@@ -69,8 +69,13 @@ fun HexPatcherScreen(vm: StudioViewModel, onOpenRegisters: () -> Unit) {
             Button(onClick = {
                 error = null
                 scope.launch {
-                    val r = withContext(Dispatchers.Default) { CoreApi.disassemble(hex, 0) }
-                    r.onSuccess { disasm = it }.onFailure { error = it.message }
+                    val e = parseEntry(entry)
+                    if (e == null) {
+                        error = "entry offset must be a number"
+                    } else {
+                        val r = withContext(Dispatchers.Default) { CoreApi.disassemble(hex, e) }
+                        r.onSuccess { disasm = it }.onFailure { error = it.message }
+                    }
                 }
             }) { Text("Disassemble") }
         }

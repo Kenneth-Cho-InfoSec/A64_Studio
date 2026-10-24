@@ -35,10 +35,11 @@ data class FoldState(
 class StudioViewModel(app: Application) : AndroidViewModel(app) {
     private val store = ProjectStore(app)
     private val worker = WorkerClient(app)
+    private val preferences = app.getSharedPreferences("editor_colors", 0)
 
     var colors by mutableStateOf(EditorColors.fromPrefs(app))
         private set
-    var fontSize by mutableStateOf(14f)
+    var fontSize by mutableStateOf(preferences.getFloat("font_size", 14f).coerceIn(10f, 28f))
         private set
 
     var editor by mutableStateOf(TextFieldValue(ProjectStore.DEFAULT_SOURCE))
@@ -417,12 +418,15 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun runBenchmark(id: String) {
+        if (isRunning) return
+        isRunning = true
         status = "Running benchmark…"
         worker.benchmark(id, 20_000L) { result ->
             result.onSuccess { json ->
                 val obj = runCatching { JSONObject(json) }.getOrNull()
                 val transportError = obj?.optString("error").orEmpty()
                 if (transportError.isNotBlank()) {
+                    isRunning = false
                     status = transportError
                     return@onSuccess
                 }
@@ -433,7 +437,11 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
                     status = if (parsed.ok) "Benchmark ${parsed.name}: ${"%.1f".format(parsed.opsPerSec)} $unit/s"
                     else "Benchmark ${parsed.name}: ${parsed.reason}"
                 } else status = "Could not parse benchmark result"
-            }.onFailure { status = it.message ?: "benchmark failed" }
+                isRunning = false
+            }.onFailure {
+                isRunning = false
+                status = it.message ?: "benchmark failed"
+            }
         }
     }
 
@@ -525,11 +533,12 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
 
     fun updateFontSize(size: Float) {
         fontSize = size.coerceIn(10f, 28f)
+        preferences.edit().putFloat("font_size", fontSize).apply()
     }
 
     fun resetColors() {
         applyPreset(EditorColors.Midnight)
-        fontSize = 14f
+        updateFontSize(14f)
     }
 
     private fun lineStart(text: String, line: Int): Int {

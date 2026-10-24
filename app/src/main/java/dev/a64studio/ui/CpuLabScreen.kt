@@ -13,16 +13,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -77,7 +78,16 @@ fun CpuLabScreen(vm: StudioViewModel, onBenchmarks: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 cpu.features.forEach { f ->
-                    AssistChip(onClick = {}, label = { Text(f, style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace)) })
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = vm.colors.selection.copy(alpha = 0.45f),
+                    ) {
+                        Text(
+                            f,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                        )
+                    }
                 }
             }
         }
