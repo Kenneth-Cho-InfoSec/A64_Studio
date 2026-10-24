@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A64 Studio</string>
+    <string name="app_description">Native ARM64 assembly IDE for Android</string>
+</resources>

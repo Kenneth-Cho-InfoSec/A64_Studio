@@ -1,0 +1,40 @@
+# Gradle / Android
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+captures/
+.cxx/
+
+# Generated native library (built by the Gradle cargoBuild task)
+app/src/main/jniLibs/
+
+# Rust
+core/target/
+
+# Signing material and local build secrets
+*.jks
+*.keystore
+*.env
+*.p12
+*.pfx
+
+# Packaged artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Local deliverable copies (APKs are build artifacts)
+dist/

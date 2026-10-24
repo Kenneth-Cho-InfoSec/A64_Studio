@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-host:
+    name: Rust tests (x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test core
+        working-directory: core
+        run: cargo test
+
+  rust-qemu:
+    name: Rust tests (aarch64 under QEMU)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install QEMU user-mode
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+      - name: Add musl target
+        run: rustup target add aarch64-unknown-linux-musl
+      - name: Test AArch64 trampoline and core
+        run: scripts/qemu-aarch64-test.sh
+
+  android:
+    name: Android build, unit tests and encoding check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK/NDK
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Add Android Rust target
+        run: rustup target add aarch64-linux-android
+      - name: Build and test
+        run: |
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+      - name: Verify 270 encodings against LLVM
+        run: |
+          cargo build --manifest-path core/Cargo.toml --bin a64asm
+          python3 scripts/verify-encodings.py
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: a64-studio-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

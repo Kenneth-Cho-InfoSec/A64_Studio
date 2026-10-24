@@ -1,0 +1,2 @@
+-keep class dev.a64studio.core.NativeBridge { *; }
+-keepclasseswithmembernames class * { native <methods>; }

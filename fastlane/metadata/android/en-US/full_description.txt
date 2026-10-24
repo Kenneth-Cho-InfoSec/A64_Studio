@@ -1,0 +1,17 @@
+A64 Studio is an offline ARM64 assembly IDE for Android. Write AArch64 assembly, assemble it locally, and run the machine code on your device's real CPU. Inspect registers, flags, memory and disassembly without a server, emulator, root, or Termux.
+
+Features:
+- Editor with AArch64 syntax highlighting, line numbers, folding, find/replace, undo/redo, autocomplete, signature hints, minimap, error underlines and a custom key row.
+- Real execution in an isolated :worker process with a watchdog. A hanging or crashing guest does not take down the editor.
+- Registers (x0-x30, SP, NZCV), machine code, memory snapshot and CPU feature inspection.
+- Instruction Explorer, raw Hex Patcher, benchmarks, projects and theme/token-color settings.
+- 270 assembler encodings cross-checked against LLVM. Unsupported instructions produce diagnostics; nothing is silently approximated.
+- No INTERNET permission and no tracking. Fully offline.
+
+Requirements and honest limitations:
+- ARM64 (arm64-v8a) Android 8.0 or newer. The app does not emulate ARM on x86 devices; execution reports an explicit unsupported message instead.
+- Guest x30 is the host return address. Self-modifying code is not supported because Android enforces W^X.
+- The worker has the same Android UID as the app. It is process isolation, not a security sandbox. Do not run untrusted assembly.
+- The assembler is not a complete GNU assembler and does not provide a debugger, linker, libc, threads or SIMD register inspection.
+
+A64 Studio is free software under GPL-3.0-or-later. Source code and build instructions are in the project repository.
