@@ -149,7 +149,7 @@ The debug build was installed and exercised on a Pixel 8 running Android 17
   `lib/arm64-v8a/liba64core.so` and the five example files.
 - The app requests no `INTERNET` permission.
 
-The Rust suite (47 unit tests plus the bundled-examples test) passes on the
+The Rust suite (48 unit tests plus the bundled-examples test) passes on the
 host and under `qemu-aarch64` with the `aarch64-unknown-linux-musl` target.
 The Kotlin unit tests pass on the JVM. The instrumentation test APK compiles;
 the on-device manual checks above cover the same execution paths.

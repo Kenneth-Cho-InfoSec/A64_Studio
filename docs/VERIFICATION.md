@@ -149,8 +149,8 @@ cargo test
 Result:
 
 ```
-running 47 tests
-test result: ok. 47 passed; 0 failed
+running 48 tests
+test result: ok. 48 passed; 0 failed
 running 0 tests
 test result: ok. 0 passed
 test result: ok. 1 passed        # tests/examples.rs
@@ -172,8 +172,8 @@ scripts/qemu-aarch64-test.sh
 Result:
 
 ```
-running 47 tests
-test result: ok. 47 passed; 0 failed
+running 48 tests
+test result: ok. 48 passed; 0 failed
 test result: ok. 1 passed        # tests/examples.rs
 ```
 
