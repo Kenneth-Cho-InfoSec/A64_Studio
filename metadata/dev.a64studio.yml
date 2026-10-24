@@ -11,7 +11,7 @@ Repo: https://github.com/Kenneth-Cho-InfoSec/A64_Studio.git
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: fd70bf610a54b81c63075c876eeeaf2cb54a2ae4
+    commit: cec2c26440ef7ad462d29b742ec1d970b76824be
     subdir: app
     gradle:
       - yes
