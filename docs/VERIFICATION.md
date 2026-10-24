@@ -9,13 +9,13 @@ real-device evidence, Android ARM64 emulator evidence, and host/QEMU evidence.
 - Device: Google Pixel 8
 - Android: 17
 - ABI: `arm64-v8a`
+- Page size: 4096 bytes (`getconf PAGE_SIZE`)
 - App: debug build (`dev.a64studio.debug`)
 - Connection: USB debugging, no root, no emulator
 
-The execution checks below were performed before the final trampoline fix. The
-final APK was rebuilt after the fix, but the Pixel was unplugged before it could
-be reinstalled. See [Register-leak finding](#7-register-leak-finding) and the
-emulator section for the post-fix evidence.
+The original manual checks below were performed before the final trampoline
+fix. The final APK was subsequently installed on this same Pixel and the full
+post-fix instrumentation suite passed, including the x1–x29 register check.
 
 Commands used for the basic device checks:
 
@@ -23,8 +23,22 @@ Commands used for the basic device checks:
 adb devices
 adb shell getprop ro.product.cpu.abi
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r \
+  dev.a64studio.debug.test/androidx.test.runner.AndroidJUnitRunner
 adb shell am start -n dev.a64studio.debug/dev.a64studio.MainActivity
 ```
+
+The post-fix device run used serial `37261FDJH0033X` and completed with:
+
+```
+Time: 2.588
+OK (7 tests)
+```
+
+The suite included `movX0_42_returns42`, which asserted `x0 = 42` and every
+register x1–x29 was zero, including x10. The debug APK installed successfully
+from `dist/a64studio-0.1.0-debug.apk`.
 
 ### 1. Raw hex execution: `mov x0, #42; ret`
 
@@ -139,10 +153,10 @@ host pointer (`0xd381a83dbf90`) instead of zero. The trampoline had used
 trampoline now loads `x10` last and uses `x30` for the trampoline pointer.
 
 The final Android test now asserts that **x1–x29 are zero** after
-`mov x0, #42; ret`, not just `x10`. It passes on the API 26 ARM64 emulator.
-The fix is included in the rebuilt debug and release APKs. A physical-device
-re-check of the `x10` value is still pending because the Pixel was unplugged
-before the fix was made.
+`mov x0, #42; ret`, not just `x10`. It passes on both the API 26 ARM64
+emulator and the physical Pixel 8. The fix is included in the rebuilt debug
+and release APKs. The Pixel result is instrumentation evidence; it does not
+claim that the manual pre-fix screenshot has been corrected.
 
 ## Android ARM64 emulator (TCG)
 
