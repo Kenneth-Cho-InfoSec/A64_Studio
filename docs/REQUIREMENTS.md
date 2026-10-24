@@ -9,8 +9,8 @@ Status labels mean:
 - **Pending** - required or useful work remains.
 - **Limited** - intentionally outside the product boundary.
 
-The original development tooling user brief is the source for product requirements. Items
-marked “inferred” are conclusions from the source tree, not new promises.
+The original project brief is the source for product requirements. Items marked
+“inferred” are conclusions from the source tree, not new promises.
 
 ## Functional requirements
 
@@ -36,7 +36,6 @@ marked “inferred” are conclusions from the source tree, not new promises.
 | N-02 | Preserve W^X separation and document execution isolation limits | Implemented; documented in `docs/LIMITATIONS.md` |
 | N-03 | Make unsupported instructions and platforms explicit | Verified on x86_64 host and ARM64 emulator |
 | N-04 | Keep builds reproducible with Cargo/Gradle lockfiles and CI | Verified in current workspace: clean offline Gradle build and committed lockfiles; release signing uses a local untracked key |
-| N-05 | Keep agent context portable across development tooling/development tooling | Implemented; `scripts/project-state.py` and `docs/PROJECT_STATUS.md` verified locally |
 
 ## Explicit limitations, not missing requirements
 

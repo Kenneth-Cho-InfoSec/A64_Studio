@@ -313,15 +313,10 @@ docs/
   PROJECT_OVERVIEW.md
   REQUIREMENTS.md
   ARCHITECTURE.md
-  PROJECT_STATUS.md
-  TASKS.md
-  PROJECT_STATUS.md
-  DECISIONS.md
   VERIFICATION.md
 scripts/
   verify-encodings.py
   qemu-aarch64-test.sh
-  project-state.py
 ```
 
 ## Documentation
@@ -329,18 +324,9 @@ scripts/
 - [Project overview](docs/PROJECT_OVERVIEW.md)
 - [Requirements](docs/REQUIREMENTS.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Project status](docs/PROJECT_STATUS.md)
-- [Development tasks](docs/TASKS.md)
-- [Agent checkpoint](docs/PROJECT_STATUS.md)
-- [Architecture decisions](docs/DECISIONS.md)
 - [Verification record](docs/VERIFICATION.md)
 - [Known limitations](docs/LIMITATIONS.md)
 - [Dependency licenses](docs/DEPENDENCIES.md)
-- [Material 3 UI plan](UI_UX_MATERIAL3_IMPROVEMENT_PLAN.md)
-
-The repository also contains `CONTRIBUTING.md`, which defines the portable workflow
-for development tooling, development tooling, external model, and other coding agents working on the same
-checkout.
 
 ## Architecture and technical decisions
 
@@ -380,22 +366,11 @@ produce diagnostics rather than silently generating incorrect machine code.
 
 Before changing code:
 
-1. Read `CONTRIBUTING.md` and `docs/PROJECT_STATUS.md`.
-2. Check the Git status and recent commits.
-3. Read the active task, requirements, and relevant source files.
-4. Preserve existing uncommitted work from other agents.
-5. Make focused changes and run the smallest relevant tests.
-
-Before handing work to another agent:
-
-1. Update `docs/TASKS.md` and `docs/PROJECT_STATUS.md`.
-2. Record changed files and validation results.
-3. Document blockers and unverified claims.
-4. Leave precise next steps for development tooling, development tooling, or another contributor.
-
-Git is the canonical record of code changes. The repository documents are the
-portable context layer that allows development to continue without access to a
-previous AI conversation.
+1. Check the Git status and recent commits.
+2. Read the requirements, architecture, limitations, and relevant source files.
+3. Preserve existing uncommitted work from other contributors.
+4. Make focused changes and run the smallest relevant tests.
+5. Update user-facing documentation when behavior changes.
 
 ## License
 

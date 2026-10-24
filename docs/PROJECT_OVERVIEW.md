@@ -36,6 +36,5 @@ stepping, arbitrary process access, or SIMD register capture. See
 
 The repository contains the 0.1.0 implementation: Kotlin/Jetpack Compose UI,
 Rust `cdylib`, JNI JSON bridge, worker-process execution, bundled examples,
-tests, CI, and F-Droid metadata. The implementation status and evidence are
-tracked separately in `docs/PROJECT_STATUS.md`; this file describes intent,
-not proof of every feature.
+tests, CI, and F-Droid metadata. This file describes product intent; the
+verification record documents tested behavior and evidence.

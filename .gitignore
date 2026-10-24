@@ -39,7 +39,4 @@ Thumbs.db
 # Local deliverable copies (APKs are build artifacts)
 dist/
 
-# Local advisory lock used by scripts/project-state.py. The durable checkpoint is
-# recorded in docs/PROJECT_STATUS.md and remains portable through Git.
-.agent/
 __pycache__/
