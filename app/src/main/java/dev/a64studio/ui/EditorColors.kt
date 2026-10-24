@@ -78,7 +78,7 @@ data class EditorColors(
         val Midnight = EditorColors(
             name = "Midnight",
             dark = true,
-            background = Color(0xFF0B0F14),
+            background = Color(0xFF000000),
             foreground = Color(0xFFD7E1EA),
             instruction = Color(0xFF7DD3FC),
             register = Color(0xFFFBBF24),
@@ -180,9 +180,18 @@ data class EditorColors(
                 val raw = p.getString(key, null) ?: return fallback
                 return runCatching { Color(android.graphics.Color.parseColor(raw)) }.getOrDefault(fallback)
             }
+            val storedBackground = p.getString("background", null)
+            val background = if (
+                base.name == Midnight.name &&
+                (storedBackground == null || storedBackground.equals("#0B0F14", ignoreCase = true))
+            ) {
+                Midnight.background
+            } else {
+                c("background", base.background)
+            }
             return base.copy(
                 name = p.getString("preset", base.name) ?: base.name,
-                background = c("background", base.background),
+                background = background,
                 foreground = c("foreground", base.foreground),
                 instruction = c("instruction", base.instruction),
                 register = c("register", base.register),

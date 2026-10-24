@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,27 @@ fun SettingsScreen(vm: StudioViewModel) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
+        SectionCard("App theme", "Material surfaces and controls", vm.colors.accent) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    AssistChip(
+                        onClick = { vm.updateThemeMode(mode) },
+                        label = { Text(mode.label, style = MaterialTheme.typography.labelSmall) },
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Dynamic color", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "Use device colors on Android 12+",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = vm.dynamicColor, onCheckedChange = vm::updateDynamicColor)
+            }
+        }
         SectionCard("Theme presets", vm.colors.name, vm.colors.accent) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 EditorColors.presets.forEach { preset ->

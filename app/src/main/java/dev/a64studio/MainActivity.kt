@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -19,13 +21,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         setContent {
-            A64Theme(vm.colors) {
+            A64Theme(vm.colors, vm.themeMode, vm.dynamicColor) {
+                val scheme = MaterialTheme.colorScheme
                 SideEffect {
-                    window.statusBarColor = vm.colors.background.toArgb()
-                    window.navigationBarColor = vm.colors.background.toArgb()
+                    window.statusBarColor = scheme.background.toArgb()
+                    window.navigationBarColor = scheme.background.toArgb()
                     WindowInsetsControllerCompat(window, window.decorView).apply {
-                        isAppearanceLightStatusBars = !vm.colors.dark
-                        isAppearanceLightNavigationBars = !vm.colors.dark
+                        isAppearanceLightStatusBars = scheme.background.luminance() > 0.5f
+                        isAppearanceLightNavigationBars = scheme.background.luminance() > 0.5f
                     }
                 }
                 StudioApp(vm)

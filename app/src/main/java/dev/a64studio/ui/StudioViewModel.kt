@@ -1,6 +1,8 @@
 package dev.a64studio.ui
 
 import android.app.Application
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 
 data class FoldState(
     val label: String,
@@ -38,6 +41,10 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
     private val preferences = app.getSharedPreferences("editor_colors", 0)
 
     var colors by mutableStateOf(EditorColors.fromPrefs(app))
+        private set
+    var themeMode by mutableStateOf(ThemeMode.fromStored(preferences.getString("theme_mode", ThemeMode.System.name)))
+        private set
+    var dynamicColor by mutableStateOf(preferences.getBoolean("dynamic_color", false))
         private set
     var fontSize by mutableStateOf(preferences.getFloat("font_size", 14f).coerceIn(10f, 28f))
         private set
@@ -297,7 +304,7 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
             .joinToString("\n")
         folded = FoldState(label, text, count)
         editor = TextFieldValue(foldedText, TextRange(0))
-        status = "Folded $count line(s) under $label — editing disabled"
+        status = "Folded $count line(s) under $label - editing disabled"
     }
 
     fun unfold() {
@@ -480,6 +487,65 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
+    fun renameProject(name: String): Boolean {
+        if (name.isBlank()) return false
+        val oldName = currentProject ?: return saveProject(name)
+        return runCatching { store.rename(oldName, name, editor.text) }
+            .onSuccess { meta ->
+                currentProject = meta.name
+                lastSavedText = editor.text
+                refreshProjects()
+                status = "Renamed ${meta.name}"
+            }
+            .onFailure { status = "Could not rename project: ${it.message ?: "unknown error"}" }
+            .isSuccess
+    }
+
+    fun importProject(uri: Uri, onComplete: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            status = "Importing project…"
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val resolver = getApplication<Application>().contentResolver
+                    val displayName = resolver.query(
+                        uri,
+                        arrayOf(OpenableColumns.DISPLAY_NAME),
+                        null,
+                        null,
+                        null,
+                    )?.use { cursor ->
+                        if (cursor.moveToFirst()) cursor.getString(0) else null
+                    } ?: "imported-project.s"
+                    val text = resolver.openInputStream(uri)?.use { input ->
+                        val output = ByteArrayOutputStream()
+                        val buffer = ByteArray(8 * 1024)
+                        var total = 0
+                        while (true) {
+                            val read = input.read(buffer)
+                            if (read < 0) break
+                            total += read
+                            require(total <= MAX_IMPORTED_BYTES) {
+                                "file is larger than ${MAX_IMPORTED_BYTES / (1024 * 1024)} MiB"
+                            }
+                            output.write(buffer, 0, read)
+                        }
+                        output.toByteArray().toString(Charsets.UTF_8)
+                    } ?: error("could not read the selected file")
+                    require('\u0000' !in text) { "selected file is not a text project" }
+                    store.importProject(displayName, text)
+                }
+            }
+            result.onSuccess { meta ->
+                openProject(meta.name)
+                status = "Imported ${meta.name}"
+                onComplete(true)
+            }.onFailure {
+                status = "Could not import project: ${it.message ?: "unknown error"}"
+                onComplete(false)
+            }
+        }
+    }
+
     fun openProject(name: String) {
         val text = store.load(name) ?: run {
             status = "Could not open $name"
@@ -536,6 +602,16 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
         preferences.edit().putFloat("font_size", fontSize).apply()
     }
 
+    fun updateThemeMode(mode: ThemeMode) {
+        themeMode = mode
+        preferences.edit().putString("theme_mode", mode.name).apply()
+    }
+
+    fun updateDynamicColor(enabled: Boolean) {
+        dynamicColor = enabled
+        preferences.edit().putBoolean("dynamic_color", enabled).apply()
+    }
+
     fun resetColors() {
         applyPreset(EditorColors.Midnight)
         updateFontSize(14f)
@@ -550,5 +626,9 @@ class StudioViewModel(app: Application) : AndroidViewModel(app) {
             idx = nl + 1
         }
         return idx
+    }
+
+    private companion object {
+        const val MAX_IMPORTED_BYTES = 2 * 1024 * 1024
     }
 }

@@ -85,12 +85,12 @@ returns an error that the UI displays.
 
 `core/src/asm/` is a two-pass, section-aware assembler:
 
-1. **Lex/parse** — lines, labels, directives, operands, comments. A
+1. **Lex/parse** - lines, labels, directives, operands, comments. A
    `HighlightSession` can reuse the lexer for the editor.
-2. **Pass 1** — collect labels, section sizes and statement sizes. The image
+2. **Pass 1** - collect labels, section sizes and statement sizes. The image
    layout is fixed: `.text` starts at offset 0, `.data` starts at the next page
    boundary when non-empty.
-3. **Pass 2** — encode instructions, resolve local labels, apply relocations,
+3. **Pass 2** - encode instructions, resolve local labels, apply relocations,
    emit diagnostics with 1-based line/column and UTF-16 column offsets.
 
 Supported sections/directives include `.text`, `.data`, `.bss`, `.global`,
@@ -148,6 +148,10 @@ There are two deadlines:
   arrives, it checks the marker. If the marker exists, the UI sees
   `worker was terminated after the timeout`; otherwise it reports that the
   worker did not answer.
+
+Source runs containing `svc` are rejected before the worker starts. The app
+does not emulate Linux syscalls or expose guest stdout, so source programs
+must return through `ret` and expose results through the captured registers.
 
 A guest crash kills only the worker. `onServiceDisconnected` /
 `onBindingDied` clear the binding, fail the pending request, unbind, and stop

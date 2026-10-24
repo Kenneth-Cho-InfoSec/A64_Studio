@@ -1,220 +1,404 @@
 # A64 Studio
 
-A native ARM64 assembly IDE for Android. Write AArch64 assembly, assemble it
-offline, run the resulting machine code on the device's real CPU, and inspect
-registers, flags, memory and disassembly.
+<p align="center">
+  <img src="app/src/main/res/drawable-nodpi/ic_launcher_logo.png" alt="A64 Studio logo" width="220">
+</p>
 
-A64 Studio is not an emulator. It does not bundle QEMU, Unicorn, Termux, a
-Linux userland, or any other execution layer. Guest instructions are executed
-directly by the Android device's ARM64 core, inside a separate `:worker`
-process with a watchdog.
+<p align="center">
+  A native AArch64 assembly studio for Android
+</p>
 
-![Editor running the Fibonacci example](docs/screenshots/editor-fib.png)
+A64 Studio is an offline Android IDE for writing, assembling, inspecting, and
+executing AArch64 assembly on a compatible device. The Rust core assembles the
+source and the Android application runs the resulting instructions directly on
+the device CPU. The app does not emulate ARM, bundle a Linux userland, or send
+source code to a server.
 
-## What is in the app
+The project is designed for learning, experimentation, instruction encoding
+work, register inspection, and small native execution experiments on real
+ARM64 Android hardware.
 
-- **Editor** — large monospace editor with line numbers, AArch64 syntax
-  highlighting, error underlines, diagnostics with line/column, label
-  highlighting, fold/unfold, undo/redo, find/replace, autocomplete,
-  signature hints, a minimap, and a custom key row (`Tab`, `#`, `[`, `]`,
-  `{`, `}`, `,`, `:`).
-- **Assemble / Run / Stop / Inspect** — assemble in the editor process, run
-  in the isolated worker, stop the worker, and jump to the inspectors.
-- **Registers** — x0–x30, SP, NZCV, elapsed time and exit reason captured
-  after the guest returns.
-- **Machine Code** — encoded bytes, offsets, source lines, image sizes and
-  relocations.
-- **Memory** — hex dump of the code/data image after the run (first 64 KiB).
-- **CPU Lab** — real CPU model, architecture, page size, HWCAP/HWCAP2 and
-  feature flags read from the device; explicit W^X and execution notes.
-- **Instruction Explorer** — searchable table of every instruction the
-  offline encoder implements, with syntax, description and example.
-- **Hex Patcher** — disassemble or run a raw little-endian AArch64 payload.
-- **Benchmarks** — integer, memory, NEON and floating-point guest kernels,
-  plus a host assembler benchmark.
-- **Projects** — plain `.s` files in private app storage, with bundled
-  examples (`hello`, `registers`, `fib`, `neon`, `memory`).
-- **Appearance** — theme presets, font size, and per-token color editing.
+## Project status
 
-| Registers | Diagnostics |
-|---|---|
-| ![Registers](docs/screenshots/registers-fib.png) | ![Diagnostics](docs/screenshots/diagnostics.png) |
+A64 Studio is an early 0.1.0 release. The editor, assembler, disassembler,
+native execution path, project storage, appearance controls, diagnostic tools,
+and device validation workflow are implemented. The assembler intentionally
+covers a focused set of AArch64 instructions rather than claiming full GNU
+assembler compatibility.
 
-| Hex Patcher | Worker timeout |
-|---|---|
-| ![Hex Patcher](docs/screenshots/hex-patcher.png) | ![Worker timeout](docs/screenshots/worker-timeout.png) |
+The current source tree has been validated with:
+
+- 49 Rust unit tests and one bundled-example test.
+- 5 Kotlin/JVM tests.
+- 9 Android instrumentation tests on a physical Pixel 8.
+- Native execution on an ARM64 Android device.
+- QEMU user-mode validation of the Rust AArch64 execution path.
+- An LLVM encoding comparison covering 270 instruction forms.
+
+See [docs/VERIFICATION.md](docs/VERIFICATION.md) for command output, device
+details, APK hashes, emulator limitations, and the distinction between host,
+QEMU, emulator, and physical-device evidence.
+
+## Features
+
+### Assembly editor
+
+- Monospace AArch64 editor built with Jetpack Compose.
+- Line numbers aligned to the measured text layout.
+- Syntax highlighting driven by the Rust lexer.
+- Error and warning underlines with line and column diagnostics.
+- Label highlighting and active-label feedback.
+- Autocomplete suggestions for instructions, registers, conditions, and labels.
+- Signature hints for recognized instructions.
+- Find, replace-one, replace-all, and cursor navigation.
+- Undo and redo history.
+- Source folding for labeled blocks.
+- A minimap aligned to the editor's measured line geometry.
+- A compact assembly key row for common symbols and registers.
+- Import of external `.s` files through the Android document picker.
+- Large pasted files are handled without crashing the gutter or minimap.
+
+### Assemble, run, and inspect
+
+- Assemble source in the editor process for fast diagnostics.
+- Run native code in a separate Android `:worker` process.
+- Stop a running guest program.
+- Capture general-purpose registers `x0` through `x30`, SP, and NZCV.
+- Capture elapsed execution time and the guest exit status.
+- Inspect encoded machine code and source mappings.
+- Inspect the loaded code and data image.
+- View a bounded hexadecimal memory dump after execution.
+- Explore supported instruction encodings and examples.
+- Run raw little-endian AArch64 payloads with an entry offset.
+- Run bundled integer, memory, NEON, and floating-point benchmarks.
+
+### Projects and examples
+
+Projects are stored as plain `.s` files in the app's private storage. The
+project menu supports creating, opening, saving, importing, renaming, and
+deleting projects. Long-press the centered project filename in the overflow
+menu to rename the active project.
+
+Bundled examples include:
+
+- `hello.s`
+- `registers.s`
+- `fib.s`
+- `neon.s`
+- `memory.s`
+
+### Appearance and accessibility
+
+- System, light, and dark appearance modes.
+- OLED black default palette for the Midnight theme.
+- Custom accent and token colors.
+- Persisted editor font size.
+- Material 3 color roles, surfaces, shapes, and component states.
+- Accessible labels for editor, minimap, actions, diagnostics, and navigation.
+- Responsive bottom navigation and navigation rail behavior.
+- Touch targets sized for the Android interface where the compact editor
+  layout allows it.
+
+### About and licensing
+
+The app includes an About screen with developer information, runtime license
+information, project links, and the application license. A64 Studio is
+released under the Mozilla Public License 2.0.
+
+## Execution model
+
+The execution path is intentionally simple and explicit:
+
+```text
+Compose editor
+    |
+    | JNI and JSON result transport
+    v
+Rust core in liba64core.so
+    |
+    | Android Messenger IPC
+    v
+Private :worker process
+    |
+    +-- native AArch64 execution
+    +-- RX code mapping
+    +-- RW data mapping
+    +-- watchdog process termination
+```
+
+The editor process does not execute guest instructions directly. The worker
+process has a watchdog that terminates a guest which does not return before its
+deadline. This protects the editor process from infinite loops and many guest
+crashes. It is process isolation, not a complete security sandbox.
+
+### Return contract
+
+A source program must eventually return through `ret` so the execution
+trampoline can capture its register state. Results are exposed through the
+Registers, Machine Code, and Memory screens.
+
+A64 Studio does not provide a Linux syscall environment or a guest stdout
+stream. Source programs that contain `svc` are rejected before entering the
+worker and report an unsupported-instruction result. This means Linux-style
+programs that use `svc` for `write` or `exit` must be adapted to return values
+through registers instead.
+
+For example:
+
+```asm
+.text
+.global asm_main
+
+asm_main:
+    mov x0, #42
+    ret
+```
+
+After running, open Registers to inspect `x0`.
 
 ## Platform requirements
 
-- Android 8.0 (API 26) or newer.
-- An ARM64 (`arm64-v8a`) device. The APK contains only the arm64-v8a native
-  library.
-- No root. No Termux. No network permission.
+- Android 8.0 or newer, API 26 or newer.
+- A physical ARM64 device with the `arm64-v8a` ABI for native execution.
+- Android SDK platform 36 for the current build configuration.
+- Android NDK `28.2.13676358`.
+- JDK 17 or newer. JDK 21 is used by the current local release workflow.
+- Rust 1.82 or newer for the core toolchain.
+- The Android app does not require root, Termux, network access, or a remote
+  execution service.
 
-On an x86_64 emulator or an x86_64 Linux host, the app still opens and the
-assembler/disassembler/lexer work, but execution reports an explicit
-"native execution is unavailable" result. It never simulates ARM execution.
+The APK contains only the `arm64-v8a` native library. On an x86 or x86_64
+device, the UI and offline tools can still open, but native execution reports
+that ARM64 execution is unavailable. A64 Studio never substitutes emulation
+for native execution in the app.
 
-## Build
+## Build from source
 
-Prerequisites:
+Clone the repository, open a terminal at its root, and make sure the Android
+SDK, NDK, JDK, Rust toolchain, and Android Rust target are available.
 
-- JDK 17 or newer (JDK 21 is used by the release build).
-- Android SDK platform 36 and NDK `28.2.13676358`.
-- Rust 1.82+ with the `aarch64-linux-android` target:
-  `rustup target add aarch64-linux-android`.
-- `cargo` on `PATH` or at `~/.cargo/bin/cargo`.
+```bash
+rustup target add aarch64-linux-android
+./gradlew :app:assembleDebug
+```
 
-The Gradle build cross-compiles the Rust core automatically. It sets the NDK
-linker, `CC_*`/`AR_*`, and `-Wl,-z,max-page-size=16384` for 16 KiB-page
+The Gradle build cross-compiles the Rust core and copies the resulting shared
+library into the Android application. The build configures the Android NDK
+linker and uses a 16 KiB maximum page size linker argument for newer Android
 devices.
 
-```bash
-# Debug APK (package dev.a64studio.debug)
-./gradlew :app:assembleDebug
+The debug APK is written to:
 
-# Release APK (unsigned unless signing variables are supplied)
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+The debug application ID is `dev.a64studio.debug`.
+
+Build a release APK with:
+
+```bash
 ./gradlew :app:assembleRelease
 ```
 
-The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`; the
-release APK is written to `app/build/outputs/apk/release/app-release.apk`.
+The release APK is written to:
 
-### Signing a release build
+```text
+app/build/outputs/apk/release/app-release.apk
+```
 
-The repository does not contain a signing key. To build an installable,
-signed release locally:
+### Local release signing
+
+The repository does not contain a signing key. To create a local signed build,
+provide a keystore and the expected environment variables:
 
 ```bash
-keytool -genkeypair -keystore ~/.a64studio-release.jks -alias a64studio \
-  -keyalg RSA -keysize 2048 -validity 10000
+keytool -genkeypair \
+  -keystore "$HOME/.a64studio-release.jks" \
+  -alias a64studio \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
 
-export A64_RELEASE_STORE_FILE=$HOME/.a64studio-release.jks
-export A64_RELEASE_STORE_PASSWORD='...'
+export A64_RELEASE_STORE_FILE="$HOME/.a64studio-release.jks"
+export A64_RELEASE_STORE_PASSWORD='your-store-password'
 export A64_RELEASE_KEY_ALIAS=a64studio
-export A64_RELEASE_KEY_PASSWORD='...'
+export A64_RELEASE_KEY_PASSWORD='your-key-password'
+
 ./gradlew :app:assembleRelease
 ```
 
-F-Droid signs with its own key; do not publish a locally generated key as an
-official release key.
+Do not publish a locally generated signing key as the official application
+release key. F-Droid and other distribution services should sign their own
+artifacts.
 
-## Tests
+## Install and run on a Pixel 8
+
+With USB debugging enabled and the phone connected:
 
 ```bash
-# Rust core: assembler, lexer, disassembler, execution, CPU, benchmarks.
-cd core && cargo test
+adb devices
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell monkey -p dev.a64studio.debug 1
+```
 
-# LLVM cross-check of 270 encodings (requires an Android NDK clang).
-python3 scripts/verify-encodings.py
+To run the instrumentation APK directly when the offline Gradle connected-test
+plugin is unavailable:
 
-# Kotlin/JVM syntax-highlighting contract tests.
-./gradlew :app:testDebugUnitTest
+```bash
+./gradlew :app:assembleDebugAndroidTest
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r \
+  dev.a64studio.debug.test/androidx.test.runner.AndroidJUnitRunner
+```
 
-# On-device instrumentation tests (requires an ARM64 device).
+The current test suite includes native execution, raw payload execution,
+diagnostics, disassembly, project storage, external-import behavior, worker
+watchdog behavior, unsupported syscall handling, and the no-network permission
+check.
+
+## Tests and validation
+
+Run the Rust core tests:
+
+```bash
+cd core
+cargo test
+cd ..
+```
+
+Run Kotlin/JVM tests:
+
+```bash
+./gradlew :app:testDebugUnitTest --offline
+```
+
+Run the Android instrumentation suite on a connected ARM64 device:
+
+```bash
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-The instrumentation suite covers real execution of `mov x0, #42; ret`,
-raw-hex execution, diagnostics, disassembly, worker watchdog termination,
-save/reopen, and the absence of the `INTERNET` permission. It passes 7/7 on an
-ARM64 API 26 emulator; see `docs/VERIFICATION.md` for the direct-headless
-emulator setup and the real-device evidence.
+Run the LLVM encoding comparison when an Android NDK toolchain is available:
 
-### QEMU fallback
+```bash
+python3 scripts/verify-encodings.py
+```
 
-For CI or a machine without ARM64 hardware, the Rust tests can be run with
-QEMU user-mode emulation. This validates the AArch64 trampoline and execution
-engine, but it is **not** a substitute for real-device testing.
+Run the QEMU user-mode Rust validation when the target and QEMU are installed:
 
 ```bash
 rustup target add aarch64-unknown-linux-musl
 scripts/qemu-aarch64-test.sh
 ```
 
-## Verification performed
+QEMU validation is useful for the Rust execution and trampoline code. It is
+not evidence that the Android app can execute natively on a non-ARM64 phone.
 
-The debug build was installed and exercised on a Pixel 8 running Android 17
-(`arm64-v8a`). The results below are from that device, not from an emulator.
-The final debug and release APKs were also installed on an ARM64 API 26
-emulator (TCG); all seven instrumentation tests passed, and the release build
-ran the Fibonacci example. That emulator evidence validates the Android
-integration path, not real-CPU behavior.
+## Repository layout
 
-- Raw payload `40 05 80 d2 c0 03 5f d6` (`mov x0, #42; ret`) executed and
-  the Registers screen showed `x0 = 0x2a` (42).
-- The bundled `fib.s` example executed and showed `x0 = 0x37` (55) and
-  `x1 = 0x59` (89).
-- An infinite branch (`00 00 00 14`, `b .`) caused the `:worker` process to
-  be killed by its watchdog. The editor process stayed alive and reported
-  "worker was terminated after the timeout".
-- An invalid immediate (`mov x0, #notanumber`) produced an error underline
-  and the diagnostic
-  `literal expression: undefined symbol 'notanumber'`.
-- The release APK is signed with APK Signature Scheme v2 and contains
-  `lib/arm64-v8a/liba64core.so` and the five example files.
-- The app requests no `INTERNET` permission.
-
-The Rust suite (48 unit tests plus the bundled-examples test) passes on the
-host and under `qemu-aarch64` with the `aarch64-unknown-linux-musl` target.
-The Kotlin unit tests pass 5/5 on the JVM. The instrumentation suite passes
-7/7 on the API 26 ARM64 emulator; the Pixel manual checks above cover the same
-execution paths. See `docs/VERIFICATION.md` for exact commands, hashes and
-emulator limitations.
-
-## Architecture
-
-```
-Kotlin / Jetpack Compose (app process)
-        │  JNI (JSON strings)
-        ▼
-Rust core (liba64core.so)
-  ├─ assembler (two-pass, labels, .data, relocations)
-  ├─ lexer (UTF-16 offsets for Compose)
-  ├─ disassembler (yaxpeax-arm)
-  ├─ execution engine (mmap, W^X, I-cache flush, trampoline)
-  ├─ CPU/feature detection
-  └─ benchmarks
-        │
-        ▼
-Android :worker process (AssemblerService)
-  ├─ Messenger IPC
-  ├─ single execution thread
-  └─ watchdog: kill the worker on timeout
+```text
+app/
+  src/main/java/dev/a64studio/
+    core/       JNI bridge and native result models
+    storage/    private project storage and imports
+    ui/         Compose screens, editor, theme, and navigation
+    worker/     isolated execution service and IPC client
+  src/main/assets/examples/
+  src/androidTest/
+  src/test/
+core/
+  src/          Rust assembler, lexer, disassembler, execution, and benches
+docs/
+  PROJECT_OVERVIEW.md
+  REQUIREMENTS.md
+  ARCHITECTURE.md
+  PROJECT_STATUS.md
+  TASKS.md
+  PROJECT_STATUS.md
+  DECISIONS.md
+  VERIFICATION.md
+scripts/
+  verify-encodings.py
+  qemu-aarch64-test.sh
+  project-state.py
 ```
 
-More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Honest limitations:
-[docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+## Documentation
 
-## Safety and isolation
+- [Project overview](docs/PROJECT_OVERVIEW.md)
+- [Requirements](docs/REQUIREMENTS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Project status](docs/PROJECT_STATUS.md)
+- [Development tasks](docs/TASKS.md)
+- [Agent checkpoint](docs/PROJECT_STATUS.md)
+- [Architecture decisions](docs/DECISIONS.md)
+- [Verification record](docs/VERIFICATION.md)
+- [Known limitations](docs/LIMITATIONS.md)
+- [Dependency licenses](docs/DEPENDENCIES.md)
+- [Material 3 UI plan](UI_UX_MATERIAL3_IMPROVEMENT_PLAN.md)
 
-- Guest code runs in a **separate Android process** (`:worker`), not in the
-  editor process. A guest crash cannot corrupt the editor or a saved project.
-- The worker watchdog kills the process when the guest exceeds its deadline.
-  The client distinguishes a timeout marker from a crash and reports both.
-- Code is mapped RX and `.data` is mapped RW separately. Self-modifying code
-  is rejected by Android's W^X policy; A64 Studio does not bypass it.
-- The worker has the same Android UID and sandbox as the app. This is process
-  isolation, not a security sandbox. Do not run untrusted assembly from
-  someone else; the app is an IDE for code you understand.
-- The app has no `INTERNET` permission and does not contact any server.
+The repository also contains `CONTRIBUTING.md`, which defines the portable workflow
+for development tooling, development tooling, external model, and other coding agents working on the same
+checkout.
 
-## Instruction coverage
+## Architecture and technical decisions
 
-The encoder is a focused, hand-written AArch64 assembler, not a complete GNU
-assembler. It currently implements 270 encodings, verified against the NDK's
-LLVM assembler by `scripts/verify-encodings.py`. Unsupported mnemonics,
-operands, immediate ranges and extensions produce diagnostics instead of
-silently emitting wrong bytes. The Instruction Explorer is generated from the
-same table, so it only lists instructions that really assemble.
+The project uses a two-pass hand-written Rust assembler. It supports labels,
+sections, selected data directives, relocations, diagnostics, and a focused
+set of AArch64 encodings. The implementation is cross-checked against the
+NDK LLVM assembler by `scripts/verify-encodings.py`.
+
+The editor is written in Kotlin with Jetpack Compose and Material 3. The app
+keeps the existing enum-based navigation model, uses a bottom navigation bar
+on compact windows, and switches to a navigation rail at wider widths. The
+Rust core stays separate from Android UI and lifecycle code.
+
+Native execution uses a private memory image, executable code pages, writable
+data pages, a private guest stack, an AArch64 trampoline, and a worker process
+watchdog. These boundaries are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+and [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+
+## Known limitations
+
+A64 Studio is not a complete GNU assembler, linker, debugger, or operating
+system environment. The following are outside the current implementation:
+
+- Full GNU assembler syntax and macro preprocessing.
+- C preprocessing, include files, external object files, and ELF output.
+- Source-level stepping and breakpoints.
+- Linux syscall emulation and guest stdout.
+- A security sandbox for untrusted native code.
+- Live memory editing during execution.
+- Complete SIMD register capture.
+- Native execution on non-ARM64 devices.
+
+Unsupported instructions, directives, operands, and immediate ranges should
+produce diagnostics rather than silently generating incorrect machine code.
+
+## Contributing
+
+Before changing code:
+
+1. Read `CONTRIBUTING.md` and `docs/PROJECT_STATUS.md`.
+2. Check the Git status and recent commits.
+3. Read the active task, requirements, and relevant source files.
+4. Preserve existing uncommitted work from other agents.
+5. Make focused changes and run the smallest relevant tests.
+
+Before handing work to another agent:
+
+1. Update `docs/TASKS.md` and `docs/PROJECT_STATUS.md`.
+2. Record changed files and validation results.
+3. Document blockers and unverified claims.
+4. Leave precise next steps for development tooling, development tooling, or another contributor.
+
+Git is the canonical record of code changes. The repository documents are the
+portable context layer that allows development to continue without access to a
+previous AI conversation.
 
 ## License
 
-MPL-2.0. See [LICENSE](LICENSE). Third-party licenses are listed in
+A64 Studio is released under the [Mozilla Public License 2.0](LICENSE).
+Third-party dependency notices are available in
 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md).
-
-## F-Droid
-
-F-Droid metadata is in `metadata/dev.a64studio.yml`. The app contains no
-proprietary dependencies, no tracking, and no network access. The native core
-is built from `core/` during the Gradle build.

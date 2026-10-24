@@ -132,6 +132,19 @@ pub fn run_source(source: &str, timeout_ms: u64) -> ExecResult {
             note: String::new(),
         };
     }
+    if let Some(svc) = asm.instructions.iter().find(|insn| insn.mnemonic == "svc") {
+        let mut result = ExecResult::unsupported(
+            &format!(
+                "svc at line {} is not supported by the Android worker; A64 Studio has no Linux syscall or stdout environment",
+                svc.line,
+            ),
+            Some(asm),
+            disasm,
+            timeout_ms,
+        );
+        result.exit = "unsupported-instruction".into();
+        return result;
+    }
     run_assembled(asm, timeout_ms)
 }
 
@@ -554,6 +567,15 @@ mod tests {
             assert!(!r.supported);
             assert!(!r.ok);
         }
+    }
+
+    #[test]
+    fn source_syscalls_are_rejected_before_the_worker_runs() {
+        let r = run_source("svc #0\nret\n", 1000);
+        assert!(!r.ok);
+        assert_eq!(r.exit, "unsupported-instruction");
+        assert!(r.reason.contains("svc"));
+        assert!(r.reason.contains("syscall"));
     }
 
     #[test]

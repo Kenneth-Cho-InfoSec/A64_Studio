@@ -106,10 +106,11 @@ constraints, not placeholders.
   `arm64-v8a`). Other ARM64 devices, page sizes and Android versions may
   expose different HWCAP features or W^X behavior.
 - The Android instrumentation suite passes on an ARM64 API 26 emulator (TCG):
-  **7/7 tests**, including the x1–x29 zero assertion after
-  `mov x0, #42; ret`. This validates the Android/JNI/Binder/`:worker`/Compose
-  path, but not real-hardware CPU timing. A physical-device re-run after the
-  trampoline fix is still pending.
+  **7/7 historical tests**, including the x1–x29 zero assertion after
+  `mov x0, #42; ret`. The latest physical Pixel 8 run passes **9/9 tests**
+  after the trampoline and unsupported-syscall fixes. The emulator validates
+  the Android/JNI/Binder/`:worker`/Compose path, but not real-hardware CPU
+  timing.
 - The API 26 emulator was the only ARM64 image that completed boot in this
   environment. API 28 failed in `system_server` (Codec2), and API 30/36 host
   QEMU processes crashed in `goldfish_address_space_memory_state_save`.

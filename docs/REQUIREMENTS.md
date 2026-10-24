@@ -2,12 +2,12 @@
 
 Status labels mean:
 
-- **Verified** — supported by a reproducible local command or recorded device
+- **Verified** - supported by a reproducible local command or recorded device
   evidence.
-- **Implemented** — present in source but not fully re-verified in the current
+- **Implemented** - present in source but not fully re-verified in the current
   environment.
-- **Pending** — required or useful work remains.
-- **Limited** — intentionally outside the product boundary.
+- **Pending** - required or useful work remains.
+- **Limited** - intentionally outside the product boundary.
 
 The original development tooling user brief is the source for product requirements. Items
 marked “inferred” are conclusions from the source tree, not new promises.
@@ -19,7 +19,7 @@ marked “inferred” are conclusions from the source tree, not new promises.
 | R-01 | Kotlin + Compose Android UI with a large editor at launch | Verified | `app/src/main/java/dev/a64studio/ui/`; UI launched on the API 26 ARM64 emulator and Pixel 8 |
 | R-02 | Offline Rust AArch64 assembler with diagnostics and source mappings | Verified | `core/src/asm/`; 270/270 LLVM encoding check and Rust tests |
 | R-03 | Real native execution on ARM64, never emulation | Verified | `core/src/exec.rs`; Pixel 8 and API 26 ARM64 emulator evidence in `docs/VERIFICATION.md` |
-| R-04 | Isolated worker process, watchdog, crash/timeout reporting | Verified | `AssemblerService`, `WorkerClient`; 7/7 instrumentation including `b .` timeout |
+| R-04 | Isolated worker process, watchdog, crash/timeout reporting | Verified | `AssemblerService`, `WorkerClient`; 9/9 Pixel 8 instrumentation including `b .` timeout and unsupported `svc` handling |
 | R-05 | Syntax highlighting, diagnostics, editor navigation, folding and key row | Implemented / verified | `core/src/lexer.rs`, `EditorScreen.kt`, `Highlight.kt`; 5/5 JVM tests and manual UI |
 | R-06 | Register, machine-code, memory, CPU and project views | Implemented / partially verified | `InspectorScreens.kt`, `CpuLabScreen.kt`, `ProjectsScreen.kt`; registers and project storage exercised on API 26, other inspector screens source-reviewed |
 | R-07 | Instruction explorer, hex patcher, benchmarks and bundled examples | Implemented / partially verified | corresponding Compose screens and `core/src/bench.rs`; examples packaged and Fibonacci run, other screens source-reviewed |

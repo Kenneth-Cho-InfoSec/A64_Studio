@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,21 +17,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.layout.Layout
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -42,28 +52,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.a64studio.model.Diagnostic
+import kotlin.math.roundToInt
 
 @Composable
 fun EditorScreen(
     vm: StudioViewModel,
+    onFind: () -> Unit,
+    onSave: () -> Unit,
+    onMore: () -> Unit,
+    overflowMenu: @Composable () -> Unit,
 ) {
-    var showFind by remember { mutableStateOf(false) }
-    var showFold by remember { mutableStateOf(false) }
     val errorMap = remember(vm.asm) {
         vm.asm?.errors?.groupBy { it.line } ?: emptyMap()
     }
     val word = vm.currentWord()
+    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
     val suggestions = remember(vm.editor, vm.reference) {
         if (word.third.isBlank()) emptyList()
         else {
@@ -78,20 +94,54 @@ fun EditorScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 8.dp)) {
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FilledTonalButton(onClick = { vm.scheduleAssemble(immediate = true) }) { Text("Assemble") }
-            Spacer(Modifier.width(6.dp))
-            Button(onClick = { vm.run() }, enabled = !vm.isRunning) { Text("Run") }
-            Spacer(Modifier.width(6.dp))
-            OutlinedButton(onClick = { vm.stop() }, enabled = vm.isRunning) { Text("Stop") }
-            Spacer(Modifier.width(6.dp))
-            TextButton(onClick = { vm.undoEdit() }, enabled = vm.folded == null) { Text("Undo") }
-            TextButton(onClick = { vm.redoEdit() }, enabled = vm.folded == null) { Text("Redo") }
-            TextButton(onClick = { showFind = true }) { Text("Find") }
-            TextButton(onClick = { showFold = true }) { Text("Fold") }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < 420.dp
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FilledTonalButton(
+                    onClick = { vm.scheduleAssemble(immediate = true) },
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
+                ) { Text("Assemble") }
+                Button(
+                    onClick = { if (vm.isRunning) vm.stop() else vm.run() },
+                    colors = if (vm.isRunning) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
+                    },
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
+                ) { Text(if (vm.isRunning) "Stop" else "Run") }
+
+                IconButton(onClick = { vm.undoEdit() }, enabled = vm.folded == null) {
+                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                }
+                IconButton(onClick = { vm.redoEdit() }, enabled = vm.folded == null) {
+                    Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+                }
+                if (!compact) {
+                    IconButton(onClick = onFind) {
+                        Icon(Icons.Filled.Search, contentDescription = "Find")
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                if (vm.isDirty) {
+                    IconButton(onClick = onSave) {
+                        Icon(Icons.Filled.Save, contentDescription = "Save project")
+                    }
+                }
+                Box {
+                    IconButton(onClick = onMore) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "More actions")
+                    }
+                    overflowMenu()
+                }
+            }
         }
 
         Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -116,7 +166,7 @@ fun EditorScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Folded ${f.count} line(s) under ${f.label} — editing is disabled",
+                    "Folded ${f.count} line(s) under ${f.label} - editing is disabled",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f),
                 )
@@ -125,8 +175,19 @@ fun EditorScreen(
         }
 
         Row(Modifier.weight(1f).fillMaxWidth()) {
-            CodeEditor(vm, errorMap, Modifier.weight(1f))
-            Minimap(vm.source, vm.colors)
+            CodeEditor(
+                vm = vm,
+                errors = errorMap,
+                modifier = Modifier.weight(1f),
+                textLayout = textLayout,
+                onTextLayout = { result ->
+                    val previous = textLayout
+                    if (previous == null || previous.layoutInput != result.layoutInput || previous.size != result.size) {
+                        textLayout = result
+                    }
+                },
+            )
+            Minimap(vm.source, vm.colors, vm.fontSize, textLayout)
         }
 
         vm.signatureHint?.let {
@@ -153,8 +214,6 @@ fun EditorScreen(
         ErrorPanel(vm)
     }
 
-    if (showFind) FindDialog(vm, onDismiss = { showFind = false })
-    if (showFold) FoldDialog(vm, onDismiss = { showFold = false })
 }
 
 @Composable
@@ -162,6 +221,8 @@ private fun CodeEditor(
     vm: StudioViewModel,
     errors: Map<Int, List<Diagnostic>>,
     modifier: Modifier = Modifier,
+    textLayout: TextLayoutResult?,
+    onTextLayout: (TextLayoutResult) -> Unit,
 ) {
     val scroll = rememberScrollState()
     val lineCount = remember(vm.source) { vm.source.count { it == '\n' } + 1 }
@@ -169,30 +230,33 @@ private fun CodeEditor(
         A64HighlightTransformation(vm.tokens, vm.colors, errors, vm.activeLabel)
     }
     val lineHeight = (vm.fontSize * 1.5f).sp
+    val lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.None,
+    )
     val selection = TextSelectionColors(
         handleColor = vm.colors.accent,
         backgroundColor = vm.colors.selection,
     )
     CompositionLocalProvider(LocalTextSelectionColors provides selection) {
         Row(
-            modifier.verticalScroll(scroll).background(vm.colors.background),
+            modifier
+                .fillMaxHeight()
+                .verticalScroll(scroll)
+                .background(vm.colors.background),
         ) {
             Column(
                 Modifier.width(52.dp).padding(top = 8.dp, end = 6.dp),
                 horizontalAlignment = Alignment.End,
             ) {
-                repeat(lineCount) { i ->
-                    Text(
-                        "${i + 1}",
-                        style = TextStyle(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = vm.fontSize.sp,
-                            lineHeight = lineHeight,
-                            color = vm.colors.lineNumber,
-                            textAlign = TextAlign.End,
-                        ),
-                    )
-                }
+                LineNumberGutter(
+                    lineCount = lineCount,
+                    lineHeight = lineHeight,
+                    fontSize = vm.fontSize.sp,
+                    lineHeightStyle = lineHeightStyle,
+                    color = vm.colors.lineNumber,
+                    textLayout = textLayout,
+                )
             }
             BasicTextField(
                 value = vm.editor,
@@ -206,8 +270,10 @@ private fun CodeEditor(
                     fontFamily = FontFamily.Monospace,
                     fontSize = vm.fontSize.sp,
                     lineHeight = lineHeight,
+                    lineHeightStyle = lineHeightStyle,
                     color = vm.colors.foreground,
                 ),
+                onTextLayout = onTextLayout,
                 cursorBrush = SolidColor(vm.colors.accent),
                 visualTransformation = transformation,
                 keyboardOptions = KeyboardOptions(
@@ -221,8 +287,65 @@ private fun CodeEditor(
 }
 
 @Composable
-private fun Minimap(text: String, colors: EditorColors) {
+private fun LineNumberGutter(
+    lineCount: Int,
+    lineHeight: androidx.compose.ui.unit.TextUnit,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    lineHeightStyle: LineHeightStyle,
+    color: androidx.compose.ui.graphics.Color,
+    textLayout: TextLayoutResult?,
+) {
+    val density = LocalDensity.current
+    val lineHeightPx = with(density) { lineHeight.toPx() }
+    val numberStyle = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontSize = fontSize,
+        lineHeight = lineHeight,
+        lineHeightStyle = lineHeightStyle,
+        color = color,
+        textAlign = TextAlign.End,
+    )
+    Layout(
+        content = {
+            repeat(lineCount) { i -> Text("${i + 1}", style = numberStyle) }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
+        val fallbackHeight = (lineCount * lineHeightPx).roundToInt()
+        val height = maxOf(
+            constraints.minHeight,
+            textLayout?.size?.height ?: fallbackHeight,
+            placeables.maxOfOrNull { it.height } ?: 0,
+        )
+        layout(constraints.maxWidth, height) {
+            placeables.forEachIndexed { index, placeable ->
+                // A paste can update the source text before BasicTextField has
+                // produced its matching layout result. Never query a stale
+                // result outside its current visual-line range.
+                val top = textLayout
+                    ?.takeIf { index < it.lineCount }
+                    ?.getLineTop(index)
+                    ?.roundToInt()
+                    ?: (index * lineHeightPx).roundToInt()
+                placeable.placeRelative(
+                    x = constraints.maxWidth - placeable.width,
+                    y = top,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Minimap(
+    text: String,
+    colors: EditorColors,
+    fontSize: Float,
+    textLayout: TextLayoutResult?,
+) {
     val bars = remember(text) { minimapBars(text) }
+    val lineHeight = with(LocalDensity.current) { (fontSize * 1.5f).sp.toPx() }
     Canvas(
         Modifier
             .width(40.dp)
@@ -232,13 +355,21 @@ private fun Minimap(text: String, colors: EditorColors) {
             .semantics { contentDescription = "Code minimap preview" },
     ) {
         if (bars.isEmpty()) return@Canvas
-        val step = size.height / bars.size
+        val layoutHeight = textLayout?.size?.height?.toFloat() ?: (bars.size * lineHeight)
+        val scale = (size.height / layoutHeight).coerceAtMost(1f)
         bars.forEachIndexed { i, (line, frac) ->
             val color = if (line % 10 == 0) colors.lineNumber else colors.accent.copy(alpha = 0.45f)
+            val measuredLine = textLayout?.takeIf { line < it.lineCount }
+            val top = measuredLine?.getLineTop(line)?.times(scale) ?: (line * lineHeight * scale)
+            val bottom = measuredLine?.getLineBottom(line)?.times(scale)
+                ?: ((line + 1) * lineHeight * scale)
             drawRect(
                 color = color,
-                topLeft = Offset(2f, i * step),
-                size = Size((frac * (size.width - 4f)).coerceAtLeast(1f), (step * 0.65f).coerceAtLeast(1f)),
+                topLeft = Offset(2f, top),
+                size = Size(
+                    (frac * (size.width - 4f)).coerceAtLeast(1f),
+                    (bottom - top).coerceAtLeast(1f),
+                ),
             )
         }
     }
@@ -301,7 +432,7 @@ private fun ErrorPanel(vm: StudioViewModel) {
 }
 
 @Composable
-private fun FindDialog(vm: StudioViewModel, onDismiss: () -> Unit) {
+fun FindDialog(vm: StudioViewModel, onDismiss: () -> Unit) {
     var find by remember { mutableStateOf("") }
     var replace by remember { mutableStateOf("") }
     AlertDialog(
@@ -325,7 +456,7 @@ private fun FindDialog(vm: StudioViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun FoldDialog(vm: StudioViewModel, onDismiss: () -> Unit) {
+fun FoldDialog(vm: StudioViewModel, onDismiss: () -> Unit) {
     val labels = remember(vm.source) { vm.labelNames() }
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -31,6 +31,34 @@ class ProjectStore(private val context: Context) {
         return ProjectMeta(file.nameWithoutExtension, file, file.lastModified(), file.length())
     }
 
+    fun rename(oldName: String, newName: String, text: String): ProjectMeta {
+        val oldFile = File(dir, "${sanitize(oldName)}.s")
+        val newFile = File(dir, "${sanitize(newName)}.s")
+        require(!newFile.exists() || newFile.canonicalFile == oldFile.canonicalFile) {
+            "A project named ${newFile.nameWithoutExtension} already exists"
+        }
+        newFile.writeText(text)
+        if (oldFile.canonicalFile != newFile.canonicalFile) oldFile.delete()
+        return ProjectMeta(newFile.nameWithoutExtension, newFile, newFile.lastModified(), newFile.length())
+    }
+
+    /**
+     * Imports a source file into private app storage without replacing an
+     * existing project with the same name.
+     */
+    fun importProject(fileName: String, text: String): ProjectMeta {
+        val sourceName = fileName.substringAfterLast('/').substringBeforeLast('.', fileName)
+        val base = sanitize(sourceName).take(48).ifBlank { "imported-project" }
+        var candidate = base
+        var suffix = 1
+        while (exists(candidate)) {
+            val label = if (suffix == 1) "$base (imported)" else "$base (imported $suffix)"
+            candidate = sanitize(label)
+            suffix++
+        }
+        return save(candidate, text)
+    }
+
     fun load(name: String): String? {
         val file = File(dir, "${sanitize(name)}.s")
         return if (file.exists()) file.readText() else null
@@ -78,7 +106,7 @@ class ProjectStore(private val context: Context) {
     companion object {
         const val DEFAULT_SOURCE = """.text
 .global asm_main
-// A64 Studio — native ARM64 assembly.
+// A64 Studio - native ARM64 assembly.
 // Assemble, then run on an ARM64 device.
 asm_main:
     mov x0, #42

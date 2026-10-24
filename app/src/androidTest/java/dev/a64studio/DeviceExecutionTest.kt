@@ -11,6 +11,7 @@ import dev.a64studio.worker.WorkerClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -68,6 +69,15 @@ class DeviceExecutionTest {
     }
 
     @Test
+    fun sourceSyscallsAreRejectedWithoutWaitingForWorkerTimeout() {
+        requireArm64()
+        val result = CoreApi.run("svc #0\nret\n", 8_000).getOrThrow()
+        assertFalse(result.ok)
+        assertEquals("unsupported-instruction", result.exit)
+        assertTrue(result.reason.contains("syscall", ignoreCase = true))
+    }
+
+    @Test
     fun assemblyDiagnosticsHaveLineAndColumn() {
         requireArm64()
         val result = CoreApi.assemble(".text\nasm_main:\n    mov x0, #notanumber\n    ret\n").getOrThrow()
@@ -94,7 +104,7 @@ class DeviceExecutionTest {
         val latch = CountDownLatch(1)
         var failure: Throwable? = null
         try {
-            // b .  — an infinite branch. The worker must be killed, not the
+            // b .  - an infinite branch. The worker must be killed, not the
             // editor process.
             client.runHex("00000014", 0, 600) { result ->
                 failure = result.exceptionOrNull()
@@ -124,6 +134,26 @@ class DeviceExecutionTest {
             assertTrue(store.list().any { it.name == name })
         } finally {
             store.delete(name)
+        }
+    }
+
+    @Test
+    fun importProjectCopiesSourceAndAvoidsOverwrite() {
+        val store = ProjectStore(context)
+        val base = "external_${System.currentTimeMillis()}"
+        val source = ".text\nasm_main:\n    mov x0, #9\n    ret\n"
+        val importedNames = mutableListOf<String>()
+        try {
+            val first = store.importProject("$base.s", source)
+            val second = store.importProject("$base.s", source + "// second\n")
+            importedNames += first.name
+            importedNames += second.name
+            assertEquals(base, first.name)
+            assertNotEquals(first.name, second.name)
+            assertEquals(source, store.load(first.name))
+            assertEquals(source + "// second\n", store.load(second.name))
+        } finally {
+            importedNames.forEach(store::delete)
         }
     }
 

@@ -1,14 +1,14 @@
 //! A64 Studio native core.
 //!
 //! Modules:
-//! * `asm`      — two-pass AArch64 assembler and encoders
-//! * `disasm`   — pure-Rust AArch64 disassembler
-//! * `exec`     — real native execution on ARM64 (never emulation)
-//! * `cpu`      — CPU/feature/platform detection
-//! * `bench`    — guest and host benchmarks
-//! * `lexer`    — incremental syntax lexer
-//! * `syntax`   — shared vocabulary and instruction reference
-//! * `jni_bridge` — JSON JNI surface for the Kotlin app
+//! * `asm`      - two-pass AArch64 assembler and encoders
+//! * `disasm`   - pure-Rust AArch64 disassembler
+//! * `exec`     - real native execution on ARM64 (never emulation)
+//! * `cpu`      - CPU/feature/platform detection
+//! * `bench`    - guest and host benchmarks
+//! * `lexer`    - incremental syntax lexer
+//! * `syntax`   - shared vocabulary and instruction reference
+//! * `jni_bridge` - JSON JNI surface for the Kotlin app
 
 pub mod asm;
 pub mod bench;

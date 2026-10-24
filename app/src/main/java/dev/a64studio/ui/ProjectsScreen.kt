@@ -34,7 +34,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun ProjectsScreen(vm: StudioViewModel, onOpen: () -> Unit) {
+fun ProjectsScreen(vm: StudioViewModel, onOpen: () -> Unit, onImport: () -> Unit) {
     var showSave by remember { mutableStateOf(false) }
     var deleteName by remember { mutableStateOf<String?>(null) }
     var showExamples by remember { mutableStateOf(false) }
@@ -43,13 +43,14 @@ fun ProjectsScreen(vm: StudioViewModel, onOpen: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(12.dp)) {
         Text("Projects", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            "Plain .s files in private app storage. Nothing is uploaded.",
+            "Plain .s files are copied into private app storage. Nothing is uploaded.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { showSave = true }) { Text("Save current") }
+            OutlinedButton(onClick = onImport) { Text("Import") }
             OutlinedButton(onClick = { vm.newProject(); onOpen() }) { Text("New") }
             OutlinedButton(onClick = { showExamples = true }) { Text("Examples") }
         }

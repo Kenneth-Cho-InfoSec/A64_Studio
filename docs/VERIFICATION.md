@@ -29,11 +29,11 @@ adb shell am instrument -w -r \
 adb shell am start -n dev.a64studio.debug/dev.a64studio.MainActivity
 ```
 
-The post-fix device run used serial `37261FDJH0033X` and completed with:
+The latest post-fix device run used serial `37261FDJH0033X` and completed with:
 
 ```
-Time: 2.588
-OK (7 tests)
+Time: 2.589
+OK (9 tests)
 ```
 
 ### Current Material 3 UI milestone
@@ -44,9 +44,9 @@ on the same physical Pixel 8 without an emulator:
 ```text
 release build: BUILD SUCCESSFUL
 debug + androidTest build: BUILD SUCCESSFUL
-Rust: 48 unit tests + 1 bundled-examples test passed
+Rust: 49 unit tests + 1 bundled-examples test passed
 JVM: 5/5 tests passed
-instrumentation: Time: 2.553, OK (7 tests)
+instrumentation: Time: 2.589, OK (9 tests)
 ```
 
 The release APK installed successfully. Manual device checks verified:
@@ -169,11 +169,11 @@ native-code: 'arm64-v8a'
 
 The Pixel screenshots in `docs/screenshots/` are:
 
-- `editor-fib.png` — Fibonacci source and completed run.
-- `registers-fib.png` — register inspector after Fibonacci.
-- `diagnostics.png` — invalid immediate, underline and diagnostic.
-- `hex-patcher.png` — raw-hex disassembly/execution screen.
-- `worker-timeout.png` — status after the infinite branch was killed.
+- `editor-fib.png` - Fibonacci source and completed run.
+- `registers-fib.png` - register inspector after Fibonacci.
+- `diagnostics.png` - invalid immediate, underline and diagnostic.
+- `hex-patcher.png` - raw-hex disassembly/execution screen.
+- `worker-timeout.png` - status after the infinite branch was killed.
 
 The API 26 emulator screenshot is
 `docs/screenshots/registers-fib-api26.png`; it is described in the emulator
