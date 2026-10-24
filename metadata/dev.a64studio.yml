@@ -1,48 +1,26 @@
-# Template metadata for F-Droid. Replace the repository URLs with the real
-# public repository and tag the release commit as v0.1.0 before submitting.
 Categories:
   - Development
 License: MPL-2.0
-AuthorName: A64 Studio contributors
-WebSite: https://github.com/a64studio/a64studio
-SourceCode: https://github.com/a64studio/a64studio
-IssueTracker: https://github.com/a64studio/a64studio/issues
-Changelog: https://github.com/a64studio/a64studio/blob/main/CHANGELOG.md
+AuthorName: Kenneth-Cho-InfoSec
+SourceCode: https://github.com/Kenneth-Cho-InfoSec/A64_Studio
+IssueTracker: https://github.com/Kenneth-Cho-InfoSec/A64_Studio/issues
+Changelog: https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/CHANGELOG.md
 AutoName: A64 Studio
-Summary: Native ARM64 assembly IDE
-Description: |
-  A64 Studio is an offline AArch64 assembly IDE for Android. It assembles
-  source locally and runs the machine code on the device's real ARM64 CPU in
-  an isolated worker process with a watchdog. Inspect registers, flags, machine
-  code, memory and disassembly without a server, emulator, root or Termux.
-
-  The editor includes syntax highlighting, line numbers, folding,
-  find/replace, undo/redo, autocomplete, signature hints, a minimap, error
-  underlines, label highlighting and a custom key row. Additional screens
-  provide an instruction explorer, raw hex patcher, benchmarks, projects, CPU
-  feature inspection and theme/token-colour settings.
-
-  A64 Studio never emulates ARM. On x86 devices execution reports an explicit
-  unsupported message. Guest x30 is the host return address, self-modifying
-  code is not supported because Android enforces W^X, and the worker is
-  process isolation rather than a security sandbox. The assembler implements
-  270 verified encodings, not the complete GNU assembler, and there is no
-  debugger, linker, libc, thread runtime or SIMD register inspector.
-
-  The app requests no INTERNET permission and contains no tracking or network
-  code.
 RepoType: git
-Repo: https://github.com/a64studio/a64studio
+Repo: https://github.com/Kenneth-Cho-InfoSec/A64_Studio.git
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: v0.1.0
+    commit: fd70bf610a54b81c63075c876eeeaf2cb54a2ae4
+    subdir: app
     gradle:
       - yes
     ndk: 28.2.13676358
+    srclibs:
+      - rustup@1.28.2
     prebuild:
-      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
-      - source $HOME/.cargo/env && rustup target add aarch64-linux-android
+      - $$rustup$$/rustup-init.sh -y --default-toolchain 1.82.0 --profile minimal
+        --target aarch64-linux-android
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.1.0

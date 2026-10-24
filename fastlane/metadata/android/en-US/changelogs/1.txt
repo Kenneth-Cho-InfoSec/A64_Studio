@@ -1,0 +1,1 @@
+Initial release with an offline AArch64 editor, assembler, disassembler, native execution, registers, machine code, memory inspection, projects, examples, diagnostics, benchmarks and Material 3 appearance controls.
