@@ -158,6 +158,23 @@ emulator and the physical Pixel 8. The fix is included in the rebuilt debug
 and release APKs. The Pixel result is instrumentation evidence; it does not
 claim that the manual pre-fix screenshot has been corrected.
 
+### 8. Post-fix release smoke test
+
+The final release APK was installed on the Pixel 8 and launched successfully
+with `am start -W`. The bundled `fib` source was run from the editor; the UI
+reported `Run completed in 0.004 ms`, and the Registers screen showed
+`x0 = 0x37` (55), `x1 = 0x59` (89), and `x10 = 0x0`.
+
+The same release session opened the Machine, Memory, CPU Lab, Instruction
+Explorer, Hex Patcher, and Benchmarks screens. The Hex Patcher executed
+`400580d2c0035fd6` and reported `Raw run completed` with `x0 =
+0x000000000000002a`. Instruction Explorer displayed 132 implemented
+instructions. CPU Lab reported native ARM64 execution available, `aarch64`,
+9 logical cores, and a 4096-byte page size. The Integer ALU guest benchmark
+completed with `5,000,000` iterations in `6.63 ms` (753,906,631.1
+iterations/s). No app fatal-exception or native-crash indicator appeared in
+the inspected logcat output after these interactions.
+
 ## Android ARM64 emulator (TCG)
 
 The Android emulator frontend does not support ARM64 system images on an
