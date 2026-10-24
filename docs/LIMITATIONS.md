@@ -75,9 +75,10 @@ constraints, not placeholders.
 
 ## UI and storage
 
-- Projects are plain `.s` files in the app's private storage. There is no
-  cloud sync, no Git integration and no import/export picker beyond the app's
-  own project list.
+- Projects are plain `.s` files in the app's private storage. External text
+  files can be imported through Android's document picker and are copied into
+  private storage; imports are limited to 2 MiB and there is no cloud sync or
+  Git integration.
 - The editor is a `BasicTextField` with a visual transformation. Very large
   files (tens of thousands of lines) will be slower than a native editor.
 - Syntax highlighting, folding, autocomplete and signature hints are

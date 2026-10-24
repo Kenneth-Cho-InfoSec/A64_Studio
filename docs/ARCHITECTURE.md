@@ -164,5 +164,7 @@ syntax highlighting and error underlines, plus a minimap, key row and
 line-number gutter.
 
 Projects are plain `.s` files in the app's private `files/projects/` directory.
-The bundled examples are copied there on first launch. No database and no
-network are involved.
+The bundled examples are copied there on first launch. External text files are
+selected through Android's `OpenDocument` picker and copied into this directory
+before they are opened; no external URI permission is retained. No database
+and no network are involved.
