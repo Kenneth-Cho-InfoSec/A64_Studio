@@ -366,6 +366,7 @@ pub fn insn_addsub_imm(sf: bool, sub: bool, setflags: bool, shift12: bool, imm: 
     w
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn insn_addsub_reg(sf: bool, sub: bool, setflags: bool, shift: u32, imm6: u32, rm: u32, rn: u32, rd: u32) -> u32 {
     let mut w = 0x0B00_0000u32;
     if sf { w |= 1 << 31; }
@@ -379,6 +380,7 @@ pub fn insn_addsub_reg(sf: bool, sub: bool, setflags: bool, shift: u32, imm6: u3
     w
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn insn_addsub_ext(sf: bool, sub: bool, setflags: bool, rm: u32, option: u32, imm3: u32, rn: u32, rd: u32) -> u32 {
     let mut w = 0x0B20_0000u32;
     if sf { w |= 1 << 31; }
@@ -404,6 +406,7 @@ pub fn insn_logical_imm(sf: bool, opc: u32, n: u32, immr: u32, imms: u32, rn: u3
     w
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn insn_logical_reg(sf: bool, opc: u32, shift: u32, invert: bool, rm: u32, imm6: u32, rn: u32, rd: u32) -> u32 {
     let mut w = 0x0A00_0000u32;
     if sf { w |= 1 << 31; }
@@ -514,8 +517,8 @@ pub fn insn_adrp(rd: u32, page_delta: i64) -> u32 {
 /// Main dispatch.
 pub fn encode(mnemonic: &str, ops: &[String], ctx: &Ctx) -> EResult<Vec<u32>> {
     let m = mnemonic.to_ascii_lowercase();
-    if m.starts_with("b.") {
-        let c = condition_code(&m[2..]).ok_or_else(|| EncError::new(format!("unknown condition in '{}'", mnemonic)))?;
+    if let Some(condition) = m.strip_prefix("b.") {
+        let c = condition_code(condition).ok_or_else(|| EncError::new(format!("unknown condition in '{}'", mnemonic)))?;
         if ops.len() != 1 {
             return Err(EncError::new("conditional branch takes exactly one target"));
         }

@@ -81,7 +81,7 @@ fn scalar_class(v: VReg) -> Option<(u32, u32)> {
 }
 
 fn lane_imm5(arr: Arrangement, idx: u8, op: usize) -> EResult<u32> {
-    let max = if arr.count == 0 { (128 / arr.elem.size()) as u8 - 1 } else { arr.count - 1 };
+    let max = if arr.count == 0 { (128 / arr.elem.size()) - 1 } else { arr.count - 1 };
     if idx > max {
         return Err(EncError::at(format!("lane index must be 0..{}", max), op));
     }
@@ -202,7 +202,7 @@ fn enc_movi(m: &str, ops: &[String], ctx: &Ctx) -> EResult<Vec<u32>> {
         Some((k, amt)) if k.eq_ignore_ascii_case("lsl") => amt.unwrap_or(0),
         Some((k, _)) => return Err(EncError::at(format!("only lsl is allowed, found '{}'", k), 1)),
     };
-    if v < 0 || v > 0xff {
+    if !(0..=0xff).contains(&v) {
         return Err(EncError::at("the immediate must be an 8-bit value (0..255)", 1));
     }
     let imm8 = v as u32;
@@ -509,7 +509,7 @@ fn enc_fp_convert(m: &str, ops: &[String]) -> EResult<Vec<u32>> {
     let (fv, _) = vreg(&ops[1], 1)?;
     let (ty, _) = scalar_class(fv).ok_or_else(|| EncError::at("expected S or D source", 1))?;
     let base = if m == "fcvtzs" { 0x1E38_0000u32 } else { 0x1E39_0000 };
-    Ok(vec![base | (r.width == 64) as u32 * (1 << 31) | ty << 22 | (fv.num as u32) << 5 | r.num as u32])
+    Ok(vec![base | (((r.width == 64) as u32) * (1 << 31)) | ty << 22 | (fv.num as u32) << 5 | r.num as u32])
 }
 
 fn enc_fcmp(m: &str, ops: &[String]) -> EResult<Vec<u32>> {

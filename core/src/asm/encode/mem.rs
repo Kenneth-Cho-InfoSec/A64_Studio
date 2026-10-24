@@ -193,6 +193,7 @@ fn encode_unscaled(size: u32, opc: u32, v: u32, imm: i64, mode: Mode, rn: u32, r
     Ok(w)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn encode_reg_offset(size: u32, opc: u32, v: u32, rm: Gpr, ext: Option<(u32, i64)>, scale_log2: u32, rn: u32, rt: u32) -> EResult<u32> {
     let (option, shift) = match ext {
         Some((o, a)) => {
@@ -207,10 +208,8 @@ fn encode_reg_offset(size: u32, opc: u32, v: u32, rm: Gpr, ext: Option<(u32, i64
         if rm.width != 64 {
             return Err(EncError::new("uxtx/sxtx require an X index register"));
         }
-    } else if option == 2 || option == 6 {
-        if rm.width != 32 {
-            return Err(EncError::new("uxtw/sxtw require a W index register"));
-        }
+    } else if (option == 2 || option == 6) && rm.width != 32 {
+        return Err(EncError::new("uxtw/sxtw require a W index register"));
     }
     let mut w = 0x3820_0800u32;
     w |= (size & 3) << 30;

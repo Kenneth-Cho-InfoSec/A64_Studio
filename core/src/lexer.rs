@@ -254,7 +254,6 @@ fn lex_line(text: &str, state: LexState) -> Line {
         }
         if c == '/' && i + 1 < chars.len() && chars[i + 1] == '/' {
             push(&mut tokens, i, chars.len(), TokenKind::Comment);
-            i = chars.len();
             break;
         }
         if c == '/' && i + 1 < chars.len() && chars[i + 1] == '*' {
@@ -265,7 +264,6 @@ fn lex_line(text: &str, state: LexState) -> Line {
             } else {
                 push(&mut tokens, i, chars.len(), TokenKind::Comment);
                 in_block = true;
-                i = chars.len();
                 break;
             }
         }
@@ -418,9 +416,9 @@ fn lex_line(text: &str, state: LexState) -> Line {
                 let cond_branch = lower.starts_with("b.") && condition_code(&lower[2..]).is_some();
                 if is_known_mnemonic(&lower) || cond_branch {
                     push(&mut tokens, i, j, TokenKind::Instruction);
-                } else if lower.starts_with('.') && DIRECTIVES.contains(&lower.as_str()) {
-                    push(&mut tokens, i, j, TokenKind::Directive);
-                } else if lower.starts_with('.') && !lower.starts_with(".l") {
+                } else if lower.starts_with('.')
+                    && (DIRECTIVES.contains(&lower.as_str()) || !lower.starts_with(".l"))
+                {
                     push(&mut tokens, i, j, TokenKind::Directive);
                 } else {
                     push(&mut tokens, i, j, TokenKind::Invalid);

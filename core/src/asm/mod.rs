@@ -84,7 +84,6 @@ impl Section {
 #[derive(Clone, Debug)]
 struct LabelDef {
     name: String,
-    line: usize,
     section: Section,
     offset: u64,
     global: bool,
@@ -105,10 +104,6 @@ enum StmtKind {
     Insn { mnemonic: String, operands: Vec<String>, mnem_col: usize, op_cols: Vec<usize> },
     Data { name: String, args: Vec<String>, col: usize },
     Align { bytes: u64, fill: u8 },
-    Equ { name: String, expr: String },
-    Err { message: String },
-    Warn { message: String },
-    Nothing,
 }
 
 #[derive(Clone, Debug)]
@@ -125,7 +120,6 @@ struct Stmt {
 #[derive(Clone, Debug)]
 struct PoolEntry {
     target: String,
-    line: usize,
     col: usize,
     offset: u64,
 }
@@ -158,20 +152,22 @@ impl<'a> SymbolResolver for Resolver<'a> {
                 if dir == "f" {
                     let mut best: Option<&NumLabel> = None;
                     for n in self.numeric {
-                        if n.number == number && (n.line > self.line || (n.line == self.line && n.order > self.order)) {
-                            if best.map(|b| (n.line, n.order) < (b.line, b.order)).unwrap_or(true) {
-                                best = Some(n);
-                            }
+                        if n.number == number
+                            && (n.line > self.line || (n.line == self.line && n.order > self.order))
+                            && best.map(|b| (n.line, n.order) < (b.line, b.order)).unwrap_or(true)
+                        {
+                            best = Some(n);
                         }
                     }
                     return best.map(|n| section_value(n.section, n.offset, self.data_base) as i64);
                 } else {
                     let mut best: Option<&NumLabel> = None;
                     for n in self.numeric {
-                        if n.number == number && (n.line < self.line || (n.line == self.line && n.order <= self.order)) {
-                            if best.map(|b| (n.line, n.order) > (b.line, b.order)).unwrap_or(true) {
-                                best = Some(n);
-                            }
+                        if n.number == number
+                            && (n.line < self.line || (n.line == self.line && n.order <= self.order))
+                            && best.map(|b| (n.line, n.order) > (b.line, b.order)).unwrap_or(true)
+                        {
+                            best = Some(n);
                         }
                     }
                     return best.map(|n| section_value(n.section, n.offset, self.data_base) as i64);
@@ -372,7 +368,6 @@ fn parse_quoted(s: &str, op: usize) -> Result<Vec<u8>, String> {
 fn relocatable_symbol(expr: &str, labels: &HashMap<String, u64>, equ: &HashMap<String, i64>) -> Option<String> {
     let t = expr.trim().trim_start_matches('#').trim();
     let t = t.strip_prefix(':').map(|s| s.split_once(':').map(|x| x.1).unwrap_or(s)).unwrap_or(t);
-    let mut ident = String::new();
     let mut idents = Vec::new();
     let mut i = 0;
     let b = t.as_bytes();
@@ -385,9 +380,9 @@ fn relocatable_symbol(expr: &str, labels: &HashMap<String, u64>, equ: &HashMap<S
                 let d = b[i] as char;
                 if d.is_ascii_alphanumeric() || d == '_' || d == '.' || d == '$' { i += 1; } else { break; }
             }
-            ident = t[start..i].to_string();
+            let ident = &t[start..i];
             if !ident.chars().all(|c| c.is_ascii_digit()) {
-                idents.push(ident.clone());
+                idents.push(ident.to_string());
             }
         } else {
             i += 1;
@@ -443,7 +438,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                 if labels.iter().any(|l| l.name == name && l.section == section && l.offset == off) {
                     err(line_no, col_u16(raw, consumed), name.len(), format!("label '{}' is defined more than once", name), "asm.duplicate-label");
                 }
-                labels.push(LabelDef { name: name.clone(), line: line_no, section, offset: off, global: false, size: 0 });
+                labels.push(LabelDef { name: name.clone(), section, offset: off, global: false, size: 0 });
                 pending_labels.push((name, line_no));
             }
             consumed += end;
@@ -505,10 +500,11 @@ pub fn assemble(source: &str) -> AssembleResult {
                     if dname == ".size" {
                         if let Some(n) = args.first() {
                             let n = n.trim();
-                            if let Some(l) = labels.iter_mut().find(|l| l.name == n) {
+                            if let Some(l) = labels.iter_mut().find(|l| l.name == n && l.section == section) {
                                 if let Some(expr) = args.get(1) {
-                                    if expr.trim() == ".-" || expr.trim() == "." {
-                                        l.size = l.size.max(0);
+                                    let normalized: String = expr.chars().filter(|c| !c.is_whitespace()).collect();
+                                    if normalized == ".-" || normalized == "." || normalized == format!(".-{}", n) {
+                                        l.size = off.saturating_sub(l.offset);
                                     }
                                 }
                             }
@@ -528,10 +524,10 @@ pub fn assemble(source: &str) -> AssembleResult {
                         let r = Resolver { labels: &empty_labels, equ: &equ, numeric: &empty_numeric, line: line_no, order: 0, loc, pool_symbols: &empty_pool, data_base: 0 };
                         match eval(&e, &r) {
                             Ok(v) => {
-                                if equ.contains_key(&n) {
-                                    err(line_no, col_u16(raw, body_col), name.len(), format!("symbol '{}' is already defined", n), "asm.duplicate-symbol");
+                                if let std::collections::hash_map::Entry::Vacant(entry) = equ.entry(n) {
+                                    entry.insert(v);
                                 } else {
-                                    equ.insert(n, v);
+                                    err(line_no, col_u16(raw, body_col), name.len(), format!("symbol '{}' is already defined", args[0].trim()), "asm.duplicate-symbol");
                                 }
                             }
                             Err(e2) => err(line_no, col_u16(raw, body_col) + e2.col, 1,
@@ -678,7 +674,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                 err(line_no, col_u16(raw, mnem_col), mnemonic.len(), "empty literal after '='".into(), "asm.syntax");
             } else {
                 pool_id = Some(pool.len());
-                pool.push(PoolEntry { target, line: line_no, col: op_cols.get(1).copied().unwrap_or(0), offset: 0 });
+                pool.push(PoolEntry { target, col: op_cols.get(1).copied().unwrap_or(0), offset: 0 });
                 operands[1] = String::new(); // filled in pass 2
             }
         } else if lower == "mov" && operands.len() == 2 && operands[1].trim().starts_with('#') {
@@ -706,7 +702,7 @@ pub fn assemble(source: &str) -> AssembleResult {
             }
             if need_pool {
                 pool_id = Some(pool.len());
-                pool.push(PoolEntry { target, line: line_no, col: op_cols.get(1).copied().unwrap_or(0), offset: 0 });
+                pool.push(PoolEntry { target, col: op_cols.get(1).copied().unwrap_or(0), offset: 0 });
             }
         }
         stmts.push(Stmt {
@@ -755,17 +751,6 @@ pub fn assemble(source: &str) -> AssembleResult {
     let mut pool_symbols: HashMap<String, u64> = HashMap::new();
     for (i, p) in pool.iter().enumerate() {
         pool_symbols.insert(format!(".L__pool{}", i), p.offset);
-    }
-
-    // Re-evaluate .equ with final layout (constants are unaffected).
-    for stmt in &stmts {
-        if let StmtKind::Equ { name, expr } = &stmt.kind {
-            let loc = section_value(stmt.section, stmt.offset, data_base) as i64;
-            let r = Resolver { labels: &label_values, equ: &equ, numeric: &numeric, line: stmt.line, order: 0, loc, pool_symbols: &pool_symbols, data_base };
-            if let Ok(v) = eval(expr, &r) {
-                equ.insert(name.clone(), v);
-            }
-        }
     }
 
     // ---------- pass 2: encode ----------
@@ -851,7 +836,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                         } else {
                             "asm.encoding"
                         };
-                        err(stmt.line, col_u16(&lines[stmt.line - 1], col), len, e.message, code);
+                        err(stmt.line, col_u16(lines[stmt.line - 1], col), len, e.message, code);
                     }
                 }
             }
@@ -881,7 +866,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                                         }
                                     }
                                 }
-                                Err(e) => err(stmt.line, col_u16(&lines[stmt.line - 1], *col) + e.col, 1, e.message, "asm.expr"),
+                                Err(e) => err(stmt.line, col_u16(lines[stmt.line - 1], *col) + e.col, 1, e.message, "asm.expr"),
                             }
                             pos += width as usize;
                         }
@@ -899,7 +884,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                                         pos += 1;
                                     }
                                 }
-                                Err(e) => err(stmt.line, col_u16(&lines[stmt.line - 1], *col), 1, e, "asm.string"),
+                                Err(e) => err(stmt.line, col_u16(lines[stmt.line - 1], *col), 1, e, "asm.string"),
                             }
                         }
                     }
@@ -917,7 +902,7 @@ pub fn assemble(source: &str) -> AssembleResult {
                                     let b = (v as u32).to_le_bytes();
                                     if pos + 4 <= dst.len() { dst[pos..pos + 4].copy_from_slice(&b); }
                                 }
-                                Err(e) => err(stmt.line, col_u16(&lines[stmt.line - 1], *col) + e.col, 1, e.message, "asm.expr"),
+                                Err(e) => err(stmt.line, col_u16(lines[stmt.line - 1], *col) + e.col, 1, e.message, "asm.expr"),
                             }
                             pos += 4;
                         }
@@ -933,13 +918,6 @@ pub fn assemble(source: &str) -> AssembleResult {
                 }
                 let _ = bytes;
             }
-            StmtKind::Err { message } => {
-                err(stmt.line, 0, 1, message.clone(), "asm.user-error");
-            }
-            StmtKind::Warn { message } => {
-                warnings.push(Diagnostic { line: stmt.line, col: 0, len: 1, message: message.clone(), severity: "warning".into(), code: "asm.user-warning".into() });
-            }
-            StmtKind::Equ { .. } | StmtKind::Nothing => {}
         }
     }
 
@@ -1040,6 +1018,13 @@ mod tests {
         assert!(r.ok, "{:?}", r.errors);
         assert_eq!(&r.data[..3], b"hi\0");
         assert_eq!(r.symbols.iter().find(|s| s.name == "msg").unwrap().value, (r.text_size + 4095) & !4095);
+    }
+
+    #[test]
+    fn size_directive_records_label_extent() {
+        let r = assemble(".text\nfn:\n    mov x0, #7\n    ret\n.size fn, .-fn\n");
+        assert!(r.ok, "{:?}", r.errors);
+        assert_eq!(r.symbols.iter().find(|s| s.name == "fn").unwrap().size, 8);
     }
 
     #[test]

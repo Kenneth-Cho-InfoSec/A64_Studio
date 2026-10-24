@@ -203,7 +203,7 @@ fn enc_mov(ops: &[String], ctx: &Ctx) -> EResult<Vec<u32>> {
         let v = ctx.imm(src, 1)?;
         let width = rd.width as u32;
         let mask: u64 = if width == 64 { u64::MAX } else { (1u64 << width) - 1 };
-        if width == 32 && (v < 0 || v > 0xffff_ffff) {
+        if width == 32 && !(0..=0xffff_ffff).contains(&v) {
             return Err(EncError::at("immediate does not fit in 32 bits", 1));
         }
         let uv = (v as u64) & mask;
@@ -276,7 +276,6 @@ fn enc_addsub_impl(sub: bool, setflags: bool, ops: &[String], ctx: &Ctx, _alias:
         if rn.is_sp && setflags {
             // permitted
         }
-        let bits = rn.width as u32;
         let mut sub = sub;
         if val < 0 {
             if val == i64::MIN {
@@ -285,7 +284,7 @@ fn enc_addsub_impl(sub: bool, setflags: bool, ops: &[String], ctx: &Ctx, _alias:
             val = -val;
             sub = !sub;
         }
-        let max: i64 = if bits == 64 { 0xfff } else { 0xfff };
+        let max: i64 = 0xfff;
         let mut shift12 = false;
         let mut imm = val;
         if val > max {
@@ -377,7 +376,7 @@ fn enc_logical(m: &str, ops: &[String], ctx: &Ctx) -> EResult<Vec<u32>> {
         }
         let v = ctx.imm(op2, 2)?;
         let width = rd.width as u32;
-        if width == 32 && (v < 0 || v > 0xffff_ffff) {
+        if width == 32 && !(0..=0xffff_ffff).contains(&v) {
             return Err(EncError::at("immediate does not fit in 32 bits", 2));
         }
         let mask: u64 = if width == 64 { u64::MAX } else { (1u64 << width) - 1 };

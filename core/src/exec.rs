@@ -307,7 +307,7 @@ fn run_assembled_aarch64(asm: AssembleResult, disasm: Vec<DisasmInsn>, timeout_m
     }
 
     let nzcv = regs[32] as u32;
-    let mut out = ExecResult {
+    let out = ExecResult {
         supported: true,
         ok: true,
         reason: String::new(),

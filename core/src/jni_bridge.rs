@@ -93,6 +93,7 @@ pub extern "system" fn Java_dev_a64studio_core_NativeBridge_nativeDisassemble(
 }
 
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "system" fn Java_dev_a64studio_core_NativeBridge_nativeDisassembleBytes(
     mut env: JNIEnv,
     _class: JClass,
@@ -198,6 +199,7 @@ pub extern "system" fn Java_dev_a64studio_core_NativeBridge_nativeRunBenchmark(
 }
 
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "system" fn Java_dev_a64studio_core_NativeBridge_nativeHexDump(
     mut env: JNIEnv,
     _class: JClass,

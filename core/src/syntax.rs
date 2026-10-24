@@ -458,7 +458,7 @@ pub fn parse_vreg(s: &str) -> Option<(VReg, Option<u8>)> {
         return None;
     }
     let arr = arr_str.and_then(|a| {
-        parse_arrangement(a).or_else(|| match a {
+        parse_arrangement(a).or(match a {
             "b" => Some(Arrangement { count: 0, elem: Elem::B }),
             "h" => Some(Arrangement { count: 0, elem: Elem::H }),
             "s" => Some(Arrangement { count: 0, elem: Elem::S }),
