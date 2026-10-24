@@ -25,7 +25,7 @@ marked “inferred” are conclusions from the source tree, not new promises.
 | R-07 | Instruction explorer, hex patcher, benchmarks and bundled examples | Implemented / partially verified | corresponding Compose screens and `core/src/bench.rs`; examples packaged and Fibonacci run, other screens source-reviewed |
 | R-08 | No network permission, root, Termux, or external runtime dependency | Verified | manifest, build metadata, and APK inspection; no `INTERNET` permission |
 | R-09 | Project save/reopen and private `.s` storage | Verified | `ProjectStore.kt`; `saveAndReopenProject` instrumentation test passes |
-| R-10 | ARM64-only APK packaging and F-Droid-compatible open-source metadata | Verified | Gradle ABI filter, GPL-3.0, `metadata/`, CI; APK inspection |
+| R-10 | ARM64-only APK packaging and F-Droid-compatible open-source metadata | Verified | Gradle ABI filter, MPL-2.0, `metadata/`, CI; APK inspection |
 | R-11 | Import external text assembly files into private project storage | Implemented / verified | Android `OpenDocument` picker, UTF-8 text validation, 2 MiB limit, collision-safe `ProjectStore.importProject`; Pixel 8 manual picker check and instrumentation regression |
 
 ## Non-functional requirements

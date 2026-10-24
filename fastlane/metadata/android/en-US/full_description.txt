@@ -14,4 +14,4 @@ Requirements and honest limitations:
 - The worker has the same Android UID as the app. It is process isolation, not a security sandbox. Do not run untrusted assembly.
 - The assembler is not a complete GNU assembler and does not provide a debugger, linker, libc, threads or SIMD register inspection.
 
-A64 Studio is free software under GPL-3.0-or-later. Source code and build instructions are in the project repository.
+A64 Studio is released under the Mozilla Public License 2.0 (MPL-2.0). Source code and build instructions are in the project repository.

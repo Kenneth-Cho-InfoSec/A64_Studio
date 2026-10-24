@@ -210,7 +210,7 @@ same table, so it only lists instructions that really assemble.
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](LICENSE). Third-party licenses are listed in
+MPL-2.0. See [LICENSE](LICENSE). Third-party licenses are listed in
 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md).
 
 ## F-Droid

@@ -2,7 +2,7 @@
 # public repository and tag the release commit as v0.1.0 before submitting.
 Categories:
   - Development
-License: GPL-3.0-or-later
+License: MPL-2.0
 AuthorName: A64 Studio contributors
 WebSite: https://github.com/a64studio/a64studio
 SourceCode: https://github.com/a64studio/a64studio

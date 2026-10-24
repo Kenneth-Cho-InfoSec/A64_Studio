@@ -1,6 +1,6 @@
 # Dependencies and licenses
 
-A64 Studio is licensed under **GPL-3.0-or-later**. This report covers the
+A64 Studio is licensed under **MPL-2.0**. This report covers the
 runtime and test dependencies that are distributed with or used to build the
 app. Build tools (Gradle, Android Gradle Plugin, Kotlin compiler, Rust
 toolchain) are not redistributed in the APK.
@@ -109,13 +109,14 @@ generated from the locked packages. Most are dual-licensed MIT/Apache-2.0;
 - Apache-2.0: <https://www.apache.org/licenses/LICENSE-2.0>
 - MIT: <https://opensource.org/license/mit>
 - 0BSD: <https://opensource.org/license/0bsd>
+- MPL-2.0: <https://www.mozilla.org/en-US/MPL/2.0/>
 - EPL-1.0: <https://www.eclipse.org/legal/epl-v10.html>
 - Unlicense: <https://unlicense.org/>
 - Unicode-3.0: <https://www.unicode.org/license.txt>
 
-The full GPL-3.0 text is in [../LICENSE](../LICENSE). If you redistribute a
+The full MPL-2.0 text is in [../LICENSE](../LICENSE). If you redistribute a
 modified version, keep the copyright and license notices of the dependencies
-above and make the corresponding source available under the GPL.
+above and make the corresponding source available under the MPL.
 
 ## Reproducibility
 

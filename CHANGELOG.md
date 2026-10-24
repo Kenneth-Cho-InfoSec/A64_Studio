@@ -12,4 +12,4 @@
   benchmarks, projects and appearance screens.
 - Bundled examples: `hello`, `registers`, `fib`, `neon`, `memory`.
 - Offline by design: no `INTERNET` permission.
-- GPL-3.0-or-later, F-Droid metadata, CI and verification documentation.
+- MPL-2.0, F-Droid metadata, CI and verification documentation.
