@@ -36,6 +36,38 @@ Time: 2.588
 OK (7 tests)
 ```
 
+### Current Material 3 UI milestone
+
+The approved UI implementation was rebuilt from commit `d5cf3cb` and checked
+on the same physical Pixel 8 without an emulator:
+
+```text
+release build: BUILD SUCCESSFUL
+debug + androidTest build: BUILD SUCCESSFUL
+Rust: 48 unit tests + 1 bundled-examples test passed
+JVM: 5/5 tests passed
+instrumentation: Time: 2.553, OK (7 tests)
+```
+
+The release APK installed successfully. Manual device checks verified:
+
+- the bottom navigation now displays Material icons with labels;
+- the editor exposes `Assembly editor` and `Code minimap preview` semantics;
+- Projects opens a secondary screen with a labeled `Back` action, and Android
+  Back returns to Editor;
+- the Integer ALU benchmark completed and displayed its result;
+- the editor run state remained functional and displayed the assembled source.
+
+Current signed release APK SHA-256:
+
+```text
+8051f5d356c9b4ec877aaaa85c5afcaa0bd3b0885fcb3633a1ef6236e10a6a16
+```
+
+This validates the implemented UI milestone on a compact Pixel window. The
+NavigationRail branch is source-verified but remains untested on a physical
+600 dp or wider window in this environment.
+
 The suite included `movX0_42_returns42`, which asserted `x0 = 42` and every
 register x1–x29 was zero, including x10. The debug APK installed successfully
 from `dist/a64studio-0.1.0-debug.apk`.
