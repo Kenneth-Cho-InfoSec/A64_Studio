@@ -8,9 +8,15 @@
 //! guest does not return in time. A guest crash therefore cannot take down the
 //! editor or corrupt a saved project.
 
-use crate::asm::{apply_relocs, assemble, AssembleResult, RelocInfo};
-use crate::disasm::{disassemble, hex_dump, DisasmInsn};
+use crate::asm::{assemble, AssembleResult, RelocInfo};
+use crate::disasm::{disassemble, DisasmInsn};
 use serde::Serialize;
+
+#[cfg(target_arch = "aarch64")]
+use crate::asm::apply_relocs;
+#[cfg(target_arch = "aarch64")]
+use crate::disasm::hex_dump;
+#[cfg(target_arch = "aarch64")]
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize)]
@@ -65,6 +71,7 @@ impl ExecResult {
     }
 }
 
+#[cfg(target_arch = "aarch64")]
 fn register_views(regs: &[u64; 33]) -> Vec<RegisterView> {
     let mut out = Vec::with_capacity(33);
     for i in 0..31 {
@@ -90,6 +97,7 @@ fn register_views(regs: &[u64; 33]) -> Vec<RegisterView> {
     out
 }
 
+#[cfg(target_arch = "aarch64")]
 fn flags_text(nzcv: u64) -> String {
     let mut s = String::new();
     if nzcv & 0x8000_0000 != 0 { s.push('N'); } else { s.push('-'); }
@@ -317,7 +325,6 @@ fn run_assembled_aarch64(asm: AssembleResult, disasm: Vec<DisasmInsn>, timeout_m
         timeout_ms,
         note: "x30 is the host return address because the call uses the link register. The worker process enforces the timeout.".into(),
     };
-    out.reason = "completed".into();
     out
 }
 

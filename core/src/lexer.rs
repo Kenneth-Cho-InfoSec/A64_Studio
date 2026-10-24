@@ -69,7 +69,6 @@ impl HighlightSession {
             suffix += 1;
         }
 
-        let old_changed_end = old_len - suffix; // exclusive
         let new_changed_end = new_len - suffix; // exclusive
 
         // If block-comment state at the first changed line differs from what

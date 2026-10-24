@@ -40,7 +40,7 @@ pub fn disassemble_one(bytes: &[u8], offset: u64, base: u64) -> Option<DisasmIns
         return None;
     }
     let word = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
-    let mut decoder = <ARMv8 as Arch>::Decoder::default();
+    let decoder = <ARMv8 as Arch>::Decoder::default();
     let mut reader = U8Reader::new(&bytes[..4]);
     let (text, valid) = match decoder.decode(&mut reader) {
         Ok(insn) => (format!("{}", insn), true),
