@@ -224,7 +224,7 @@ h2 {
 h1 {
   max-width: 790px;
   margin-bottom: 1.25rem;
-  font-size: clamp(3.7rem, 7vw, 6.6rem);
+  font-size: clamp(3.7rem, 6.1vw, 5.9rem);
   line-height: 0.96;
 }
 h1 span,
