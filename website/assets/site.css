@@ -927,7 +927,7 @@ table td:last-child {
     --muted: #50616a;
     --line: #c7d0d2;
     --violet: #6641a0;
-    --cyan: #006e9c;
+    --cyan: #006487;
     --lime: #3e6411;
     --pink: #a82d4c;
     --hero: #e9eeec;
@@ -943,13 +943,31 @@ table td:last-child {
     color: #fff;
   }
   .hero code,
-  .tutorial code,
-  .docs code {
+  .tutorial code {
     background: #dfe8e8;
+  }
+  .docs code {
+    background: #18232d;
+    color: #edf4f8;
   }
   .device-shot,
   .evidence-shot {
     background: #11151b;
+  }
+  .evidence-shot {
+    --muted: #d3dbe0;
+    --pink: #ff8297;
+  }
+  .docs {
+    --cyan: #73d8f2;
+    --lime: #ddfa70;
+    --muted: #b2bdc6;
+    --ink: #f2f4f2;
+    --ink-soft: #d3dbe0;
+    color: var(--ink);
+  }
+  .feature-card__glyph {
+    color: var(--cyan);
   }
   .docs {
     background: #172127;
