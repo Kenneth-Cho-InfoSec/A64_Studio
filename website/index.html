@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A64 Studio is an offline Android IDE for writing, assembling, inspecting and running small AArch64 programs on compatible ARM64 devices."
+    />
+    <meta name="theme-color" content="#11151b" />
+    <meta property="og:title" content="A64 Studio — assembly on the device" />
+    <meta
+      property="og:description"
+      content="Write AArch64 assembly on Android. Assemble offline, run on ARM64 hardware and inspect the result."
+    />
+    <title>A64 Studio — AArch64 assembly on Android</title>
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="A64 Studio home"
+        ><span class="brand__icon" aria-hidden="true">A</span
+        ><span>A64 <b>STUDIO</b><small>ANDROID / AARCH64</small></span></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="#tutorial">Get started</a>
+        <a href="#docs">Docs</a>
+        <a href="#compare">Compare</a>
+        <a href="#community">Community</a>
+      </nav>
+      <a
+        class="header-cta"
+        href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/releases/tag/v0.1.0"
+        >Get 0.1.0 <span aria-hidden="true">↗</span></a
+      >
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__copy">
+          <p class="eyebrow">
+            <span class="status-dot" aria-hidden="true"></span> VERSION 0.1.0
+            <span class="eyebrow__divider">/</span> EARLY RELEASE
+          </p>
+          <h1 id="hero-title">
+            Edit in your hand.<br /><span>Run on the CPU.</span>
+          </h1>
+          <p class="hero__lead">
+            A64 Studio is an offline Android workbench for small AArch64
+            programs: write <code>.s</code>, assemble, run on compatible
+            hardware, then inspect what changed.
+          </p>
+          <div class="hero__facts" aria-label="Product requirements">
+            <span>Android 8.0+</span><span>ARM64 for native runs</span
+            ><span>No root or network</span>
+          </div>
+          <div class="actions">
+            <a
+              class="button button--primary"
+              href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/releases/tag/v0.1.0"
+              >Download release <span aria-hidden="true">↗</span></a
+            >
+            <a class="button button--quiet" href="#tutorial"
+              >Run your first example <span aria-hidden="true">↓</span></a
+            >
+          </div>
+          <p class="release-note">
+            The GitHub APK is signed with a local development key. F-Droid
+            builds use F-Droid’s signing key; check the project’s release notes
+            before changing install sources.
+          </p>
+        </div>
+        <figure class="device-shot">
+          <div class="device-shot__bar">
+            <span class="device-light" aria-hidden="true"></span
+            ><span>EDITOR / FIB.S</span><span>RUN COMPLETE</span>
+          </div>
+          <img
+            src="assets/editor-fib.png"
+            width="1080"
+            height="2400"
+            alt="A64 Studio’s editor showing the bundled Fibonacci assembly example after a completed run."
+            fetchpriority="high"
+          />
+          <figcaption>
+            <span>BUILT-IN EXAMPLE</span><span>F(10) → x0 = 55</span>
+          </figcaption>
+          <p class="shot-note">
+            Project verification capture; the displayed run duration is
+            device-specific.
+          </p>
+          <span class="shot-index" aria-hidden="true">FIG. 01</span>
+        </figure>
+        <div class="hero__baseline">
+          <span>ASSEMBLE LOCALLY</span><span>EXECUTE NATIVELY</span
+          ><span>INSPECT THE RESULT</span>
+        </div>
+      </section>
+
+      <section class="spec-strip" aria-label="A64 Studio at a glance">
+        <p><strong>270</strong><span>verified instruction encodings</span></p>
+        <p><strong>1</strong><span>focused assembly workbench</span></p>
+        <p><strong>0</strong><span>internet permission in the app</span></p>
+        <p class="spec-strip__note">
+          Early 0.1.0 release.<br />Designed for learning and small experiments.
+        </p>
+      </section>
+
+      <section
+        class="section features"
+        id="features"
+        aria-labelledby="features-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / The workbench</p>
+            <h2 id="features-title">From source<br />to <span>state.</span></h2>
+          </div>
+          <p class="section-heading__aside">
+            Write a leaf program, watch the assembler explain it, and inspect
+            the machine state after it returns. The product is deliberately
+            smaller than a full Linux toolchain.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card--wide">
+            <span class="feature-card__tag">01 / EDIT</span
+            ><span class="feature-card__glyph" aria-hidden="true">Aa</span>
+            <h3>An editor made for assembly</h3>
+            <p>
+              Syntax highlighting, diagnostics with line and column, labels,
+              autocomplete, signature hints, find and replace, undo/redo,
+              folding, minimap and a compact symbol key row.
+            </p>
+            <span class="feature-card__foot"
+              >JETPACK COMPOSE · PRIVATE .S PROJECTS</span
+            >
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__tag">02 / ASSEMBLE</span
+            ><span class="feature-card__glyph" aria-hidden="true">{ }</span>
+            <h3>A focused Rust assembler</h3>
+            <p>
+              Two-pass assembly, labels, selected data directives, relocations,
+              disassembly and source-to-byte mapping. Unsupported forms produce
+              diagnostics.
+            </p>
+            <span class="feature-card__foot"
+              >270 FORMS · LLVM CROSS-CHECKED</span
+            >
+          </article>
+          <article class="feature-card feature-card--accent">
+            <span class="feature-card__tag">03 / RUN</span
+            ><span class="feature-card__glyph" aria-hidden="true">▶</span>
+            <h3>Use the phone’s ARM64 CPU</h3>
+            <p>
+              On a compatible device, the app runs the assembled code natively
+              in a separate worker process with a watchdog. The app does not
+              emulate another CPU.
+            </p>
+            <span class="feature-card__foot"
+              >ARM64 ANDROID · LEAF PROGRAMS</span
+            >
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__tag">04 / INSPECT</span
+            ><span class="feature-card__glyph" aria-hidden="true">x0</span>
+            <h3>See what came back</h3>
+            <p>
+              Review x0–x30, SP, NZCV, encoded bytes, disassembly, source
+              mappings and a bounded memory image after the program returns.
+            </p>
+            <span class="feature-card__foot"
+              >POST-RUN STATE · NOT A LIVE DEBUGGER</span
+            >
+          </article>
+          <article class="feature-card">
+            <span class="feature-card__tag">05 / EXPLORE</span
+            ><span class="feature-card__glyph" aria-hidden="true">⌁</span>
+            <h3>Keep small projects close</h3>
+            <p>
+              Save plain <code>.s</code> files in app storage, import UTF-8
+              source through Android’s document picker, or open bundled examples
+              for integers, memory, NEON and floating point.
+            </p>
+            <span class="feature-card__foot">IMPORT LIMIT · 2 MIB</span>
+          </article>
+          <article
+            class="feature-card feature-card--wide feature-card--warning"
+          >
+            <span class="feature-card__tag">BOUNDARY / READ BEFORE RUNNING</span
+            ><span class="feature-card__glyph" aria-hidden="true">!</span>
+            <h3>Worker process does not mean sandbox</h3>
+            <p>
+              The worker has the same Android UID and app sandbox as the editor.
+              The watchdog can end a hung process; it does not make untrusted
+              assembly safe. Run only code you have reviewed and understand.
+            </p>
+            <a href="#security"
+              >Read the execution and security limits
+              <span aria-hidden="true">→</span></a
+            >
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="section architecture"
+        aria-labelledby="architecture-title"
+      >
+        <div class="section-heading section-heading--compact">
+          <div>
+            <p class="eyebrow">02 / Under the editor</p>
+            <h2 id="architecture-title">
+              Two processes.<br /><span>One return value.</span>
+            </h2>
+          </div>
+          <p class="section-heading__aside">
+            Kotlin owns the Android interface and lifecycle. Rust handles
+            parsing and native code paths. Messenger IPC returns run results to
+            the editor.
+          </p>
+        </div>
+        <div class="pipeline" aria-label="A64 Studio execution flow">
+          <article>
+            <span>01</span><strong>Compose editor</strong
+            ><small>Open or edit a .s project</small>
+          </article>
+          <b aria-hidden="true">→</b>
+          <article>
+            <span>02</span><strong>Rust core</strong
+            ><small>Assemble · map · diagnose</small>
+          </article>
+          <b aria-hidden="true">→</b>
+          <article class="pipeline__worker">
+            <span>03</span><strong>:worker process</strong
+            ><small>Run on ARM64 · watchdog</small>
+          </article>
+          <b aria-hidden="true">→</b>
+          <article>
+            <span>04</span><strong>Result screens</strong
+            ><small>Registers · bytes · memory</small>
+          </article>
+        </div>
+        <p class="architecture__note">
+          <strong>Works without a native ARM64 device?</strong> The editor,
+          assembler and offline inspection tools still open on other Android
+          ABIs, but native execution reports that ARM64 is unavailable. The app
+          does not switch to emulation.
+        </p>
+      </section>
+
+      <section
+        class="section tutorial"
+        id="tutorial"
+        aria-labelledby="tutorial-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / Beginner walkthrough</p>
+            <h2 id="tutorial-title">
+              Make a number<br /><span>come back.</span>
+            </h2>
+          </div>
+          <p class="section-heading__aside">
+            Run the bundled Fibonacci example and inspect F(10). For this
+            tutorial’s native run, use an ARM64 Android device running API 26 or
+            later.
+          </p>
+        </div>
+        <ol class="tutorial-list">
+          <li>
+            <span class="step-index">01</span>
+            <div>
+              <h3>Install the app</h3>
+              <p>
+                Download A64 Studio 0.1.0 from the
+                <a
+                  href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/releases/tag/v0.1.0"
+                  >GitHub release</a
+                >. Android 8.0 (API 26) is the minimum; an ARM64 device is
+                required for native execution.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-index">02</span>
+            <div>
+              <h3>Open the included example</h3>
+              <p>
+                In the app, open <strong>Projects</strong> and choose
+                <code>fib.s</code>. The file defines <code>asm_main</code>,
+                calculates F(10), and returns through <code>ret</code>.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-index">03</span>
+            <div>
+              <h3>Assemble, then run</h3>
+              <p>
+                Tap <strong>Assemble</strong> to check the source. When it
+                succeeds, tap <strong>Run</strong>. The program has no Linux
+                syscalls, output stream or external dependencies.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-index">04</span>
+            <div>
+              <h3>Read the registers</h3>
+              <p>
+                Open <strong>Registers</strong>. The recorded example returns
+                <code>x0 = 0x37</code> (55) and <code>x1 = 0x59</code> (89).
+                Those values are the program’s result, not a performance claim.
+              </p>
+            </div>
+          </li>
+        </ol>
+        <figure class="evidence-shot">
+          <img
+            src="assets/diagnostics.png"
+            width="1080"
+            height="2400"
+            alt="A64 Studio showing a line and column diagnostic under an unsupported literal in an assembly file."
+            loading="lazy"
+          />
+          <figcaption>
+            <span>WHEN INPUT IS OUTSIDE THE SUBSET</span
+            ><span>The editor points to the unsupported expression.</span>
+          </figcaption>
+        </figure>
+        <aside class="callout">
+          <span>INSTALL NOTE</span>
+          <p>
+            The repository says its GitHub release APK uses a local development
+            signing key, not an official production key. F-Droid signs its own
+            build. If Android rejects an update after changing distribution
+            source, check the signer and the project’s release instructions.
+          </p>
+        </aside>
+      </section>
+
+      <section class="section docs" id="docs" aria-labelledby="docs-title">
+        <div class="section-heading section-heading--compact">
+          <div>
+            <p class="eyebrow">04 / Builder notes</p>
+            <h2 id="docs-title">The useful<br /><span>contract.</span></h2>
+          </div>
+          <p class="section-heading__aside">
+            A source-based reference for the assembler, the runtime boundary,
+            development requirements and known gaps.
+          </p>
+        </div>
+        <div class="docs-grid">
+          <article>
+            <span class="doc-index">01</span>
+            <h3>Build requirements</h3>
+            <p>
+              Android SDK platform 36, NDK <code>28.2.13676358</code>, JDK 17+,
+              Rust 1.82+ and the Android Rust target are listed by the project.
+              Native packaging is restricted to <code>arm64-v8a</code>.
+            </p>
+            <pre><code>rustup target add aarch64-linux-android
+./gradlew :app:assembleDebug</code></pre>
+            <p class="doc-caption">
+              The documented debug build command; it cross-compiles the Rust
+              core and packages the app.
+            </p>
+          </article>
+          <article>
+            <span class="doc-index">02</span>
+            <h3>Entry and return</h3>
+            <p>
+              Source programs provide <code>asm_main</code> and should return
+              with <code>ret</code>. The app captures general-purpose registers,
+              SP and NZCV after the worker returns.
+            </p>
+            <pre><code>.text
+.global asm_main
+asm_main:
+    mov x0, #42
+    ret</code></pre>
+            <p class="doc-caption">
+              Minimal documented shape. Read
+              <a
+                href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/docs/ARCHITECTURE.md"
+                >Architecture</a
+              >
+              for the execution path.
+            </p>
+          </article>
+          <article>
+            <span class="doc-index">03</span>
+            <h3>Assembler coverage</h3>
+            <p>
+              The hand-written two-pass assembler documents 270 encodings
+              checked against the NDK LLVM assembler. This is a tested subset,
+              not GNU <code>as</code> compatibility.
+            </p>
+            <p>
+              No C preprocessor, macros, external symbols, ELF output, linker,
+              source stepping or breakpoints. Unsupported instructions and
+              operands should produce diagnostics.
+            </p>
+          </article>
+          <article id="security">
+            <span class="doc-index">04</span>
+            <h3>Execution and security</h3>
+            <p>
+              The app requests no <code>INTERNET</code> permission. Code and
+              data pages are mapped separately; the worker watchdog handles
+              hangs. The worker shares the app UID, so this is process
+              separation, not a security sandbox.
+            </p>
+            <p>
+              There is no libc, Linux syscall ABI, dynamic linker, thread setup
+              or live memory inspection. Never treat the worker as isolation for
+              untrusted programs.
+            </p>
+          </article>
+          <article>
+            <span class="doc-index">05</span>
+            <h3>Tests and evidence</h3>
+            <p>
+              The repository has Rust unit and example tests, Kotlin/JVM tests,
+              Android instrumentation, LLVM encoding checks and a QEMU test
+              workflow. Its verification record separates Pixel 8, ARM64
+              emulator and host/QEMU evidence.
+            </p>
+            <p>
+              <a
+                href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/docs/VERIFICATION.md"
+                >Read the verification record</a
+              >
+              before reusing any device or benchmark result.
+            </p>
+          </article>
+          <article>
+            <span class="doc-index">06</span>
+            <h3>Project files and data</h3>
+            <p>
+              Projects are plain <code>.s</code> files in app-private storage.
+              Imports use Android’s document picker, require UTF-8 text and are
+              limited to 2 MiB. There is no cloud sync or Git integration.
+            </p>
+            <p>
+              The repository is licensed under
+              <a
+                href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/LICENSE"
+                >MPL-2.0</a
+              >; dependency licenses are listed separately.
+            </p>
+          </article>
+        </div>
+        <div class="dev-checks">
+          <span>HOST TESTS</span><code>cd core &amp;&amp; cargo test</code
+          ><span>ANDROID UNIT TESTS</span
+          ><code>./gradlew :app:testDebugUnitTest --offline</code>
+        </div>
+        <div class="docs-links">
+          <a
+            href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/tree/master/docs"
+            >All technical docs <span aria-hidden="true">↗</span></a
+          ><a
+            href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/CONTRIBUTING.md"
+            >Contribution guide <span aria-hidden="true">↗</span></a
+          >
+        </div>
+      </section>
+
+      <section
+        class="section comparison"
+        id="compare"
+        aria-labelledby="compare-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">05 / Pick your tool</p>
+            <h2 id="compare-title">
+              A studio, a toolchain<br /><span>or an emulator?</span>
+            </h2>
+          </div>
+          <p class="section-heading__aside">
+            Comparison based on each project’s official documentation, checked
+            31 October 2026. The tools solve related but different problems.
+          </p>
+        </div>
+        <div
+          class="table-wrap"
+          role="region"
+          aria-label="AArch64 assembly tool comparison"
+          tabindex="0"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Tool</th>
+                <th scope="col">What it does</th>
+                <th scope="col">A good fit when</th>
+                <th scope="col">Trade-off</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">
+                  <a href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio"
+                    >A64 Studio</a
+                  ><span class="table-label">This project</span>
+                </th>
+                <td>
+                  Android editor, focused offline assembler, native ARM64
+                  execution and post-run register/memory views.
+                </td>
+                <td>
+                  You want to learn or test small leaf programs directly on an
+                  ARM64 Android device.
+                </td>
+                <td>
+                  Early release and limited instruction/directive support; no
+                  syscall environment, linker, debugger or security sandbox.
+                  MPL-2.0.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="https://sourceware.org/binutils/docs/as/"
+                    >GNU <code>as</code></a
+                  >
+                </th>
+                <td>
+                  Command-line assembler with AArch64-specific options and
+                  syntax, designed to fit into GNU toolchains.
+                </td>
+                <td>
+                  You need broader assembler directives, object output,
+                  cross-compilation and linking on a supported development host.
+                </td>
+                <td>
+                  Requires a command-line toolchain and surrounding workflow; it
+                  is not this Android register-inspection app.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="https://github.com/termux/termux-app">Termux</a>
+                </th>
+                <td>
+                  An Android terminal and Linux environment with packages
+                  managed separately from A64 Studio.
+                </td>
+                <td>
+                  You prefer shell-based development tools, scripts and a
+                  package environment on Android.
+                </td>
+                <td>
+                  Terminal and package setup is a different workflow; it does
+                  not provide A64 Studio’s Compose editor and result screens as
+                  one app.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <a href="https://www.qemu.org/docs/master/user/"
+                    >QEMU user mode</a
+                  >
+                </th>
+                <td>
+                  Runs programs built for another CPU architecture through
+                  user-mode emulation on a supported host OS.
+                </td>
+                <td>
+                  You need to test foreign-architecture programs on a different
+                  CPU or exercise a broader Linux user-space program.
+                </td>
+                <td>
+                  Emulation and syscall translation are different from A64
+                  Studio’s native ARM64 leaf-function runtime.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="comparison-note">
+          Use GNU tools when standards coverage and object files matter; use
+          Termux when the shell is the workbench; use QEMU when you need
+          cross-architecture emulation. A64 Studio is for small, inspectable
+          AArch64 experiments on compatible Android hardware. Review each
+          project’s current license and platform notes before adopting it.
+        </p>
+        <ul class="source-links">
+          <li>
+            <a
+              href="https://sourceware.org/binutils/docs/as/AArch64-Options.html"
+              >GNU Binutils — AArch64 features</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/termux/termux-app"
+              >Termux — official project</a
+            >
+          </li>
+          <li>
+            <a href="https://www.qemu.org/docs/master/user/main.html"
+              >QEMU — user-space emulator</a
+            >
+          </li>
+          <li>
+            <a href="https://developer.android.com/ndk/guides/abis"
+              >Android NDK — ABI reference</a
+            >
+          </li>
+        </ul>
+      </section>
+
+      <section class="section faq" aria-labelledby="faq-title">
+        <p class="eyebrow">A few important details</p>
+        <h2 id="faq-title">Before the first run.</h2>
+        <details>
+          <summary>Will it run on an x86 phone or emulator?</summary>
+          <p>
+            The editor and assembler can open, but this APK contains only the
+            ARM64 native library. Native execution is unavailable on non-ARM64
+            Android. The app does not emulate ARM64.
+          </p>
+        </details>
+        <details>
+          <summary>Is it a full GNU assembler or debugger?</summary>
+          <p>
+            No. The project documents a focused set of 270 instruction encoding
+            forms. It has no full GNU syntax/preprocessor, object linker,
+            source-level stepping, breakpoints or live memory editing.
+          </p>
+        </details>
+        <details>
+          <summary>Is the worker safe for unknown assembly?</summary>
+          <p>
+            No. It is another process with the same app UID and access. The
+            watchdog can terminate a hang, but the worker is not a security
+            sandbox. Run only code you have reviewed.
+          </p>
+        </details>
+      </section>
+
+      <section class="closing" id="community" aria-labelledby="community-title">
+        <div>
+          <p class="eyebrow">06 / Keep building</p>
+          <h2 id="community-title">
+            Start small.<br /><span>Read the machine.</span>
+          </h2>
+          <p>
+            Open the example, trace the result, and check the source docs when
+            you need the exact boundary.
+          </p>
+        </div>
+        <div class="community-links">
+          <a href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/releases"
+            ><span>01</span> Releases and APK <b aria-hidden="true">↗</b></a
+          >
+          <a href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio"
+            ><span>02</span> Source repository <b aria-hidden="true">↗</b></a
+          >
+          <a href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/issues"
+            ><span>03</span> Issues and bug reports
+            <b aria-hidden="true">↗</b></a
+          >
+          <a
+            href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/LICENSE"
+            ><span>04</span> MPL-2.0 license <b aria-hidden="true">↗</b></a
+          >
+          <a
+            href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/blob/master/docs/LIMITATIONS.md"
+            ><span>05</span> Full limitations <b aria-hidden="true">↗</b></a
+          >
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand" href="#top"
+        ><span class="brand__icon" aria-hidden="true">A</span
+        ><span>A64 <b>STUDIO</b></span></a
+      >
+      <p>
+        Project screenshots:
+        <a
+          href="https://github.com/Kenneth-Cho-InfoSec/A64_Studio/tree/master/docs/screenshots"
+          >A64 Studio verification captures</a
+        >. Version 0.1.0 · checked 31 Oct 2026.
+      </p>
+      <a href="#top">Back to top ↑</a>
+    </footer>
+  </body>
+</html>
